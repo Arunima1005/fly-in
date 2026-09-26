@@ -17,6 +17,7 @@ class Zone(BaseModel):
 
 
 class Connection(BaseModel):
+    """Represent a bidirectional connection between two zones."""
     zone_src: Zone
     zone_dest: Zone
     max_link_capacity: int = 1
@@ -33,4 +34,11 @@ class Graph(BaseModel):
 
     zones: dict[str, Zone] = Field(default_factory=dict)
     connections: list[Connection] = Field(default_factory=list)
-    
+
+    def add_zone(self, zone: Zone) -> None:
+        """Add a zone to the graph."""
+        self.zones[zone.name] = zone
+
+    def get_zone(self, name: str) -> Zone | None:
+        """Return a zone by name."""
+        return self.zones.get(name)
