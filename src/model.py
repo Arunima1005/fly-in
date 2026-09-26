@@ -22,6 +22,7 @@ class Connection(BaseModel):
     zone_dest: Zone
     max_link_capacity: int = 1
 
+
 class Drone(BaseModel):
     """Represent a drone in the simulation."""
     id: int
@@ -42,3 +43,34 @@ class Graph(BaseModel):
     def get_zone(self, name: str) -> Zone | None:
         """Return a zone by name."""
         return self.zones.get(name)
+
+    def add_connection(self, connection: Connection) -> None:
+        """Add a connection to the graph."""
+        self.connections.append(connection)
+
+    def get_neighbors(self, zone: Zone) -> list[Zone]:
+        """Return zones directly connected to the given zone."""
+        neighbors = []
+
+        for connection in self.connections:
+            if connection.zone_src == zone:
+                neighbors.append(connection.zone_dest)
+            elif connection.zone_dest == zone:
+                neighbors.append(connection.zone_src)
+
+        return neighbors
+
+a = Zone(name="A", x=0, y=0)
+b = Zone(name="B", x=1, y=0)
+c = Zone(name="C", x=2, y=0)
+
+graph = Graph()
+
+graph.add_zone(a)
+graph.add_zone(b)
+graph.add_zone(c)
+
+graph.add_connection(Connection(zone_src=a, zone_dest=b))
+graph.add_connection(Connection(zone_src=b, zone_dest=c))
+print(graph.get_neighbors(a))
+print(graph.get_neighbors(b))
