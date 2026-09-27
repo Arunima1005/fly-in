@@ -18,8 +18,8 @@ class Zone(BaseModel):
 
 class Connection(BaseModel):
     """Represent a bidirectional connection between two zones."""
-    zone_src: Zone
-    zone_dest: Zone
+    zone_a: Zone
+    zone_b: Zone
     max_link_capacity: int = 1
 
 

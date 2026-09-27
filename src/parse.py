@@ -29,7 +29,7 @@ class MapParser:
             print(f"===== zone = {zone}")
             return
 
-        print(f"Line {line_number}: {line}")  
+        # print(f"Line {line_number}: {line}")  
 
     def parse_hub(self, line: str) -> Zone:
         """Parse a hub line into a Zone."""
