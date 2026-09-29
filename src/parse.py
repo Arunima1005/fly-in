@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from model import ZoneType, Drone, Graph, Zone
+from model import Connection, ZoneType, Drone, Graph, Zone
 
 class ParserError(Exception):
     """Raised when the map file contains invalid data."""
@@ -8,10 +8,14 @@ class ParserError(Exception):
 
 class MapParser:
     """Parse a Fly-in map file."""
+    def __init__(self) -> None:
+        self.graph = Graph()
 
     def parse_line(self, line: str, line_number: int) -> None:
         """Parse a single line from the map."""
         line = line.strip()
+
+        # print(f"Line {line_number}: {line}")
 
         if not line or line.startswith("#"):
             return
@@ -26,7 +30,11 @@ class MapParser:
             or line.startswith("end_hub:")
         ):
             zone = self.parse_hub(line)
-            print(f"===== zone = {zone}")
+            self.graph.add_zone(zone)
+            return
+        if line.startswith("connection:"):
+            connection = self.parse_connection(line)
+            self.graph.add_connection(connection)
             return
 
         # print(f"Line {line_number}: {line}")  
@@ -49,6 +57,7 @@ class MapParser:
             zone_type=ZoneType(metadata.get("zone", "normal")),
             color=metadata.get("color"),
             max_drones=metadata.get("max_drones", 1),
+            # max_link_capacity=metadata.get("max_link_capacity", 1)
         )
 
     def parse_metadata(self, line: str) -> dict[str, str | int]:
@@ -63,7 +72,7 @@ class MapParser:
         for item in match.group(1).split():
             key, value = item.split("=", 1)
 
-            if key == "max_drones":
+            if key in ("max_drones", "max_link_capacity"):
                 metadata[key] = int(value)
             else:
                 metadata[key] = value
@@ -84,7 +93,31 @@ class MapParser:
         if nb_drones <= 0:
             raise ParserError("Number of drones must be positive")
 
-        return nb_drones                          
+        return nb_drones 
+
+    def parse_connection(self, line: str) -> Connection:
+        """Parse a connection line.""" 
+        pattern = r"^connection:\s+(\S+)-(\S+)"
+        match = re.search(pattern, line)
+
+        if not match:
+                    raise ParserError(f"Invalid connection format: {line}")
+        
+        metadata = self.parse_metadata(line)
+
+        zone_a = self.graph.get_zone(match.group(1))
+        zone_b = self.graph.get_zone(match.group(2))
+
+        if zone_a is None or zone_b is None:
+            raise ParserError("Invalid zone")
+
+        # print(f" {match.group(1)} - {match.group(2)} [ {metadata.get("max_link_capacity", 1)}]")
+
+        return Connection(
+            zone_a=zone_a,
+            zone_b=zone_b,
+            max_link_capacity=metadata.get("max_link_capacity", 1),
+        )
 
     def parse_file(self, path: Path) -> None:
         """Read and parse a map file."""
@@ -92,6 +125,10 @@ class MapParser:
             with path.open("r", encoding="utf-8") as file:
                 for line_number, line in enumerate(file, start=1):
                     self.parse_line(line, line_number)
+
+            print("\n===== GRAPH =====")
+            print(f"Zones: {len(self.graph.zones)}")
+            print(f"Connections: {len(self.graph.connections)}")
         except OSError as exc:
             raise ParserError(
                 f"Could not read map file: {path}"

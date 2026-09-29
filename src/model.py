@@ -60,17 +60,17 @@ class Graph(BaseModel):
 
         return neighbors
 
-a = Zone(name="A", x=0, y=0)
-b = Zone(name="B", x=1, y=0)
-c = Zone(name="C", x=2, y=0)
+# a = Zone(name="A", x=0, y=0)
+# b = Zone(name="B", x=1, y=0)
+# c = Zone(name="C", x=2, y=0)
 
-graph = Graph()
+# graph = Graph()
 
-graph.add_zone(a)
-graph.add_zone(b)
-graph.add_zone(c)
+# graph.add_zone(a)
+# graph.add_zone(b)
+# graph.add_zone(c)
 
-graph.add_connection(Connection(zone_src=a, zone_dest=b))
-graph.add_connection(Connection(zone_src=b, zone_dest=c))
-print(graph.get_neighbors(a))
-print(graph.get_neighbors(b))
+# graph.add_connection(Connection(zone_src=a, zone_dest=b))
+# graph.add_connection(Connection(zone_src=b, zone_dest=c))
+# print(graph.get_neighbors(a))
+# print(graph.get_neighbors(b))
