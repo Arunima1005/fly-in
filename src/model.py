@@ -48,29 +48,22 @@ class Graph(BaseModel):
         """Add a connection to the graph."""
         self.connections.append(connection)
 
+    def has_connection(self, zone_a: Zone, zone_b: Zone) -> bool:
+        """Check whether a connection already exists."""
+
+        for connection in self.connections:
+            if (connection.zone_a == zone_a and connection.zone_b == zone_b) or (connection.zone_b == zone_a and connection.zone_a == zone_b): 
+                return True
+        return False
+
     def get_neighbors(self, zone: Zone) -> list[Zone]:
         """Return zones directly connected to the given zone."""
         neighbors = []
 
         for connection in self.connections:
-            if connection.zone_src == zone:
-                neighbors.append(connection.zone_dest)
-            elif connection.zone_dest == zone:
-                neighbors.append(connection.zone_src)
+            if connection.zone_a == zone:
+                neighbors.append(connection.zone_b)
+            elif connection.zone_b == zone:
+                neighbors.append(connection.zone_a)
 
         return neighbors
-
-# a = Zone(name="A", x=0, y=0)
-# b = Zone(name="B", x=1, y=0)
-# c = Zone(name="C", x=2, y=0)
-
-# graph = Graph()
-
-# graph.add_zone(a)
-# graph.add_zone(b)
-# graph.add_zone(c)
-
-# graph.add_connection(Connection(zone_src=a, zone_dest=b))
-# graph.add_connection(Connection(zone_src=b, zone_dest=c))
-# print(graph.get_neighbors(a))
-# print(graph.get_neighbors(b))

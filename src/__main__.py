@@ -1,8 +1,8 @@
 from pathlib import Path
-from map_selector import MapSelector
-from parse import MapParser
+from .map_selector import MapSelector
+from .parse import MapParser
 
-def main():
+def main() -> None:
     maps_directory = Path(__file__).resolve().parent.parent / "maps"
 
     selector = MapSelector(maps_directory)
