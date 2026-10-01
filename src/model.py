@@ -25,7 +25,7 @@ class Connection(BaseModel):
 
 class Drone(BaseModel):
     """Represent a drone in the simulation."""
-    id: int
+    dorne_id: int
     current_zone: Zone
     path: list[Zone] =  Field(default_factory=list)
     path_index: int
@@ -67,3 +67,11 @@ class Graph(BaseModel):
                 neighbors.append(connection.zone_a)
 
         return neighbors
+
+class Metadata(BaseModel):
+    """Represent metadata for hubs and connections."""
+
+    zone: ZoneType = ZoneType.NORMAL
+    color: str | None = None
+    max_drones: int = 1
+    max_link_capacity: int = 1

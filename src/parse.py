@@ -1,16 +1,9 @@
 import re
-from typing import TypedDict
 from pathlib import Path
-from .model import Connection, ZoneType, Drone, Graph, Zone
+from .model import Metadata, Connection, ZoneType, Drone, Graph, Zone
 
 class ParserError(Exception):
     """Raised when the map file contains invalid data."""
-
-class Metadata(TypedDict, total=False):
-    zone: str
-    color: str
-    max_drones: int
-    max_link_capacity: int
 
 class MapParser:
     """Parse a Fly-in map file."""
@@ -21,7 +14,7 @@ class MapParser:
         self.start_zone: Zone | None = None
         self.end_zone: Zone | None = None
 
-    def parse_line(self, line: str, line_number: int) -> None:
+    def parse_line(self, line: str) -> None:
         """Parse a single line from the map."""
         line = line.strip()
         if not line or line.startswith("#"):
@@ -85,27 +78,30 @@ class MapParser:
             name=zone_name,
             x=int(match.group(2)),
             y=int(match.group(3)),
-            zone_type=ZoneType(metadata.get("zone", "normal")),
-            color=metadata.get("color"),
-            max_drones=metadata.get("max_drones", 1),
+            zone_type=metadata.zone,
+            color=metadata.color,
+            max_drones=metadata.max_drones,
         )
 
     def valid_zone(self, value: str) -> bool:
         """Check whether a zone type is valid."""
         return value in [zone.value for zone in ZoneType]
-    
+
     def parse_metadata(self, line: str) -> Metadata:
         """Parse metadata from a map line."""
         match = re.search(r"\[(.*?)\]", line)
-
         if not match:
-            return {}
+            return Metadata()
 
-        metadata: Metadata = {}
-
+        metadata = Metadata()
+        seen_keys: set[str] = set()
         for item in match.group(1).split():
             try:
                 key, value = item.split("=", 1)
+                if key in seen_keys:
+                    raise ParserError(f"Duplicate metadata key: {key}")
+
+                seen_keys.add(key)
 
                 if key in ("max_drones", "max_link_capacity"):
                     try:
@@ -121,20 +117,21 @@ class MapParser:
                 )
 
                     if key == "max_drones":
-                        metadata["max_drones"] = number
+                        metadata.max_drones = number
                     else:
-                        metadata["max_link_capacity"] = number
+                        metadata.max_link_capacity = number
                 elif key == "color":
-                    metadata["color"] = value
+                    metadata.color = value
                 elif key == "zone":
                     if not self.valid_zone(value):
                         raise ParserError("Invalid zone type")
-                    metadata["zone"] = value
+                    metadata.zone = ZoneType(value)
                 else:
                     raise ParserError("Invalid metadata")
             except ValueError as exc:
                 raise ParserError("Invalid metadata") from exc
         return metadata
+
 
     def parse_nb_drones(self, line: str) -> int:
         """Parse the number of drones."""
@@ -178,15 +175,15 @@ class MapParser:
         return Connection(
             zone_a=zone_a,
             zone_b=zone_b,
-            max_link_capacity=metadata.get("max_link_capacity", 1),
+            max_link_capacity=metadata.max_link_capacity,
         )
 
     def parse_file(self, path: Path) -> None:
         """Read and parse a map file."""
         try:
             with path.open("r", encoding="utf-8") as file:
-                for line_number, line in enumerate(file, start=1):
-                    self.parse_line(line, line_number)
+                for line in file:
+                    self.parse_line(line)
                 if not self.first_line:
                     raise ParserError("Map is missing nb_drones")
                 if self.start_zone is None:

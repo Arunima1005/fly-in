@@ -484,3 +484,103 @@ something_invalid
 
     with pytest.raises(ParserError, match="Invalid line"):
         create_parser(tmp_path, content)
+
+def test_duplicate_zone_metadata(tmp_path: Path) -> None:
+    content = """\
+nb_drones: 2
+start_hub: start 0 0
+hub: A 1 0 [zone=normal zone=priority]
+end_hub: goal 2 0
+"""
+    with pytest.raises(ParserError, match="Duplicate metadata key: zone"):
+        create_parser(tmp_path, content)
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        "zone=normal zone=priority",
+        "color=green color=red",
+        "max_drones=2 max_drones=5",
+        "max_link_capacity=2 max_link_capacity=4",
+    ],
+)
+def test_duplicate_metadata(
+    tmp_path: Path,
+    metadata: str,
+) -> None:
+    content = f"""\
+nb_drones: 2
+start_hub: start 0 0
+hub: A 1 0 [{metadata}]
+end_hub: goal 2 0
+"""
+    with pytest.raises(ParserError, match="Duplicate metadata key"):
+        create_parser(tmp_path, content)
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        "max_link_capacity=0",
+        "max_link_capacity=-3",
+        "max_link_capacity=abc",
+    ],
+)
+def test_invalid_max_link_capacity(
+    tmp_path: Path,
+    metadata: str,
+) -> None:
+    content = f"""\
+nb_drones: 2
+start_hub: start 0 0
+hub: A 1 0
+end_hub: goal 2 0
+connection: start-A [{metadata}]
+"""
+    with pytest.raises(ParserError):
+        create_parser(tmp_path, content)
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        "max_drones=0",
+        "max_drones=-2",
+        "max_drones=abc",
+    ],
+)
+def test_invalid_max_drones(
+    tmp_path: Path,
+    metadata: str,
+) -> None:
+    content = f"""\
+nb_drones: 2
+start_hub: start 0 0
+hub: A 1 0 [{metadata}]
+end_hub: goal 2 0
+"""
+    with pytest.raises(ParserError):
+        create_parser(tmp_path, content)
+def test_parse_max_link_capacity(tmp_path: Path) -> None:
+    content = """\
+nb_drones: 3
+start_hub: start 0 0
+hub: A 1 0
+end_hub: goal 2 0
+connection: start-A [max_link_capacity=4]
+"""
+    parser = create_parser(tmp_path, content)
+
+    connection = parser.graph.connections[0]
+    assert connection.max_link_capacity == 4
+
+def test_parse_max_drones(tmp_path: Path) -> None:
+    content = """\
+nb_drones: 3
+start_hub: start 0 0
+hub: A 1 0 [max_drones=5]
+end_hub: goal 2 0
+"""
+    parser = create_parser(tmp_path, content)
+
+    zone = parser.graph.get_zone("A")
+    assert zone is not None
+    assert zone.max_drones == 5
