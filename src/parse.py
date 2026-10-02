@@ -1,12 +1,15 @@
 import re
 from pathlib import Path
-from .model import Metadata, Connection, ZoneType, Drone, Graph, Zone
+from .model import Metadata, Connection, ZoneType, Graph, Zone
+
 
 class ParserError(Exception):
     """Raised when the map file contains invalid data."""
 
+
 class MapParser:
     """Parse a Fly-in map file."""
+
     def __init__(self) -> None:
         self.graph = Graph()
         self.nb_drones = 0
@@ -21,7 +24,7 @@ class MapParser:
             return
 
         if not self.first_line:
-            if line.startswith("nb_drones:"):          
+            if line.startswith("nb_drones:"):
                 self.nb_drones = self.parse_nb_drones(line)
                 self.first_line = True
                 return
@@ -44,7 +47,7 @@ class MapParser:
                 self.start_zone = zone
             elif line.startswith("end_hub:"):
                 if self.end_zone is not None:
-                    raise ParserError("Duplicate zone name end_hub")          
+                    raise ParserError("Duplicate zone name end_hub")
                 self.end_zone = zone
             self.graph.add_zone(zone)
             return
@@ -57,10 +60,10 @@ class MapParser:
     def parse_hub(self, line: str) -> Zone:
         """Parse a hub line into a Zone."""
         pattern = (
-                r"^(?:start_hub|end_hub|hub):\s+"
-                r"(\S+)\s+(-?\d+)\s+(-?\d+)"
-                r"(?:\s+\[(.*?)\])?$"
-            )
+            r"^(?:start_hub|end_hub|hub):\s+"
+            r"(\S+)\s+(-?\d+)\s+(-?\d+)"
+            r"(?:\s+\[(.*?)\])?$"
+        )
         match = re.match(pattern, line)
 
         if not match:
@@ -71,9 +74,7 @@ class MapParser:
         zone_name = match.group(1)
 
         if "-" in zone_name:
-            raise ParserError(
-                f"Zone name {zone_name} cannot contain '-'."
-            )
+            raise ParserError(f"Zone name {zone_name} cannot contain '-'.")
         return Zone(
             name=zone_name,
             x=int(match.group(2)),
@@ -107,14 +108,10 @@ class MapParser:
                     try:
                         number = int(value)
                     except ValueError as exc:
-                        raise ParserError(
-                        f"{key} must be a positive number"
-                    ) from exc
+                        raise ParserError(f"{key} must be a positive number") from exc
 
                     if number <= 0:
-                        raise ParserError(
-                    f"{key} must be positive"
-                )
+                        raise ParserError(f"{key} must be positive")
 
                     if key == "max_drones":
                         metadata.max_drones = number
@@ -132,7 +129,6 @@ class MapParser:
                 raise ParserError("Invalid metadata") from exc
         return metadata
 
-
     def parse_nb_drones(self, line: str) -> int:
         """Parse the number of drones."""
         value = line.split(":", 1)[1].strip()
@@ -140,26 +136,21 @@ class MapParser:
         try:
             nb_drones = int(value)
         except ValueError as exc:
-            raise ParserError(
-                "Number of drones must be an integer"
-            ) from exc
+            raise ParserError("Number of drones must be an integer") from exc
 
         if nb_drones <= 0:
             raise ParserError("Number of drones must be positive")
 
-        return nb_drones 
+        return nb_drones
 
     def parse_connection(self, line: str) -> Connection:
-        """Parse a connection line.""" 
-        pattern = (
-            r"^connection:\s+([^\s-]+)-([^\s-]+)"
-            r"(?:\s+\[(.*?)\])?$"
-        )
+        """Parse a connection line."""
+        pattern = r"^connection:\s+([^\s-]+)-([^\s-]+)" r"(?:\s+\[(.*?)\])?$"
         match = re.match(pattern, line)
 
         if not match:
-                    raise ParserError(f"Invalid connection format: {line}")
-        
+            raise ParserError(f"Invalid connection format: {line}")
+
         metadata = self.parse_metadata(line)
 
         zone_a = self.graph.get_zone(match.group(1))
@@ -191,6 +182,4 @@ class MapParser:
                 if self.end_zone is None:
                     raise ParserError("Map is missing end_hub")
         except OSError as exc:
-            raise ParserError(
-                f"Could not read map file: {path}"
-            ) from exc
+            raise ParserError(f"Could not read map file: {path}") from exc

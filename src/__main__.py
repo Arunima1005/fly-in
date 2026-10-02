@@ -2,6 +2,7 @@ from pathlib import Path
 from .map_selector import MapSelector
 from .parse import MapParser
 
+
 def main() -> None:
     maps_directory = Path(__file__).resolve().parent.parent / "maps"
 

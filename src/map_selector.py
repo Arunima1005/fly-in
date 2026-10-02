@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class MapSelector:
     """Handle difficulty and map selection."""
 
@@ -55,4 +56,3 @@ class MapSelector:
                     return maps[index - 1]
 
             print("Invalid choice.")
-
