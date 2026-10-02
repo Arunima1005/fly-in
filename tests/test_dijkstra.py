@@ -1,7 +1,7 @@
 import pytest
 
 from src.model import Graph, Zone, ZoneType, Connection
-from src.dijkstra import Dijkstra
+from dijkstra_old import Dijkstra
 
 
 def create_zone(name: str, zone_type: ZoneType = ZoneType.NORMAL) -> Zone:
@@ -189,6 +189,107 @@ def test_blocked_destination() -> None:
     b = create_zone("B", ZoneType.BLOCKED)
     c = create_zone("C", ZoneType.BLOCKED)
     d = create_zone("D", ZoneType.BLOCKED)
+
+    graph = create_graph(
+        [a, b, c, d],
+        [
+            ("A", "B"),
+            ("B", "D"),
+            ("A", "C"),
+            ("C", "D"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is None
+
+def test_prefer_priority_zone_when_costs_tie() -> None:
+    """Prefer a route with more priority zones when costs are equal."""
+    a = create_zone("A")
+    b = create_zone("B", ZoneType.PRIORITY)
+    c = create_zone("C")
+    d = create_zone("D")
+
+    graph = create_graph(
+        [a, b, c, d],
+        [
+            ("A", "B"),
+            ("B", "D"),
+            ("A", "C"),
+            ("C", "D"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A", "B", "D"]
+
+
+def test_prefer_more_priority_zones() -> None:
+    """Prefer more priority zones when route costs tie."""
+    a = create_zone("A")
+    b = create_zone("B", ZoneType.PRIORITY)
+    c = create_zone("C")
+    d = create_zone("D", ZoneType.PRIORITY)
+    e = create_zone("E", ZoneType.PRIORITY)
+    f = create_zone("F")
+
+    graph = create_graph(
+        [a, b, c, d, e, f],
+        [
+            ("A", "B"),
+            ("B", "C"),
+            ("C", "F"),
+            ("A", "D"),
+            ("D", "E"),
+            ("E", "F"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, f)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A", "D", "E", "F"]
+
+def test_cost_has_priority_over_priority_count() -> None:
+    """Prefer lower cost over a route with more priority zones."""
+    a = create_zone("A")
+    b = create_zone("B", ZoneType.PRIORITY)
+    c = create_zone("C", ZoneType.PRIORITY)
+    d = create_zone("D")
+    e = create_zone("E")
+
+    graph = create_graph(
+        [a, b, c, d, e],
+        [
+            ("A", "B"),
+            ("B", "C"),
+            ("C", "D"),
+            ("A", "E"),
+            ("E", "D"),
+        ],
+    )
+
+    graph.zones["B"].zone_type = ZoneType.RESTRICTED
+    graph.zones["C"].zone_type = ZoneType.PRIORITY
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A", "E", "D"]
+
+def test_no_path_through_blocked_zones() -> None:
+    """Return None if every possible route is blocked."""
+    a = create_zone("A")
+    b = create_zone("B", ZoneType.BLOCKED)
+    c = create_zone("C", ZoneType.BLOCKED)
+    d = create_zone("D")
 
     graph = create_graph(
         [a, b, c, d],
