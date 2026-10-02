@@ -1,0 +1,206 @@
+import pytest
+
+from src.model import Graph, Zone, ZoneType, Connection
+from src.dijkstra import Dijkstra
+
+
+def create_zone(name: str, zone_type: ZoneType = ZoneType.NORMAL) -> Zone:
+    return Zone(
+        name=name,
+        x=0,
+        y=0,
+        zone_type=zone_type,
+    )
+
+
+def create_graph(
+    zones: list[Zone],
+    connections: list[tuple[str, str]],
+) -> Graph:
+    zone_dict = {zone.name: zone for zone in zones}
+
+    graph_connections = [
+        Connection(
+            zone_a=zone_dict[a],
+            zone_b=zone_dict[b],
+        )
+        for a, b in connections
+    ]
+
+    return Graph(
+        zones=zone_dict,
+        connections=graph_connections,
+    )
+
+
+def test_simple_path() -> None:
+    """Find a path through a simple linear graph."""
+    a = create_zone("A")
+    b = create_zone("B")
+    c = create_zone("C")
+
+    graph = create_graph(
+        [a, b, c],
+        [("A", "B"), ("B", "C")],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, c)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A", "B", "C"]
+
+
+def test_restricted_zone_cost() -> None:
+    """Prefer a longer route when it has a lower movement cost."""
+    a = create_zone("A")
+    b = create_zone("B", ZoneType.RESTRICTED)
+    c = create_zone("C")
+    d = create_zone("D")
+
+    graph = create_graph(
+        [a, b, c, d],
+        [
+            ("A", "B"),
+            ("B", "D"),
+            ("A", "C"),
+            ("C", "D"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A", "C", "D"]
+
+
+def test_blocked_zone_is_avoided() -> None:
+    """Do not enter a blocked zone if another route exists."""
+    a = create_zone("A")
+    b = create_zone("B", ZoneType.BLOCKED)
+    c = create_zone("C")
+    d = create_zone("D")
+
+    graph = create_graph(
+        [a, b, c, d],
+        [
+            ("A", "B"),
+            ("B", "D"),
+            ("A", "C"),
+            ("C", "D"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A", "C", "D"]
+
+
+def test_unreachable_destination() -> None:
+    """Return None when the destination cannot be reached."""
+    a = create_zone("A")
+    b = create_zone("B")
+    c = create_zone("C")
+
+    graph = create_graph(
+        [a, b, c],
+        [("A", "B")],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, c)
+
+    assert path is None
+
+
+def test_start_equals_end() -> None:
+    """Return a path containing only the start zone."""
+    a = create_zone("A")
+    b = create_zone("B")
+
+    graph = create_graph(
+        [a, b],
+        [("A", "B")],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, a)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A"]
+
+
+def test_choose_cheapest_route() -> None:
+    """Choose the route with the lowest total movement cost."""
+    a = create_zone("A")
+    b = create_zone("B")
+    c = create_zone("C")
+    d = create_zone("D")
+    e = create_zone("E")
+
+    graph = create_graph(
+        [a, b, c, d, e],
+        [
+            ("A", "B"),
+            ("B", "D"),
+            ("A", "C"),
+            ("C", "E"),
+            ("E", "D"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is not None
+    assert [zone.name for zone in path] == ["A", "B", "D"]
+
+
+
+def test_blocked_start() -> None:
+    """Do not enter a blocked zone if another route exists."""
+    a = create_zone("A", ZoneType.BLOCKED)
+    b = create_zone("B", ZoneType.BLOCKED)
+    c = create_zone("C", ZoneType.BLOCKED)
+    d = create_zone("D", ZoneType.BLOCKED)
+
+    graph = create_graph(
+        [a, b, c, d],
+        [
+            ("A", "B"),
+            ("B", "D"),
+            ("A", "C"),
+            ("C", "D"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is None
+
+
+def test_blocked_destination() -> None:
+    """Do not enter a blocked zone if another route exists."""
+    a = create_zone("A")
+    b = create_zone("B", ZoneType.BLOCKED)
+    c = create_zone("C", ZoneType.BLOCKED)
+    d = create_zone("D", ZoneType.BLOCKED)
+
+    graph = create_graph(
+        [a, b, c, d],
+        [
+            ("A", "B"),
+            ("B", "D"),
+            ("A", "C"),
+            ("C", "D"),
+        ],
+    )
+
+    dijkstra = Dijkstra(graph)
+    path = dijkstra.find_path(a, d)
+
+    assert path is None
