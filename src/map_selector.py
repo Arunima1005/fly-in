@@ -37,9 +37,7 @@ class MapSelector:
         maps = sorted(difficulty_directory.glob("*.txt"))
 
         if not maps:
-            raise FileNotFoundError(
-                f"No maps found for difficulty: {diffculty_level}"
-            )
+            raise FileNotFoundError(f"No maps found for difficulty: {diffculty_level}")
 
         while True:
             print(f"\nAvailable {diffculty_level} maps:")

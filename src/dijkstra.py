@@ -77,20 +77,17 @@ class Dijkstra:
                 if neighbor.zone_type == ZoneType.BLOCKED:
                     continue
 
-                movement_cost = (
-                    2 if neighbor.zone_type == ZoneType.RESTRICTED else 1
-                )
+                movement_cost = 2 if neighbor.zone_type == ZoneType.RESTRICTED else 1
                 is_priority = neighbor.zone_type == ZoneType.PRIORITY
 
                 new_cost = current_cost + movement_cost
-                new_priority = (
-                    current_entry.priority_count + (1 if is_priority else 0)
-                )
+                new_priority = current_entry.priority_count + (1 if is_priority else 0)
                 neighbor_entry = entries[neighbor.name]
 
                 candidate_key = (new_cost, -new_priority)
                 current_key = (
-                    neighbor_entry.cost, -neighbor_entry.priority_count,
+                    neighbor_entry.cost,
+                    -neighbor_entry.priority_count,
                 )
 
                 if candidate_key < current_key:
@@ -99,7 +96,8 @@ class Dijkstra:
                     neighbor_entry.previous = current_entry.zone
 
                     heapq.heappush(
-                        queue, (new_cost, -new_priority, neighbor.name),
+                        queue,
+                        (new_cost, -new_priority, neighbor.name),
                     )
 
         if end.name not in visited:

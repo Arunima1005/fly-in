@@ -17,7 +17,7 @@ class Zone(BaseModel):
     color: str | None = None
     max_drones: int = 1
 
-
+    
 class Connection(BaseModel):
     """Represent a bidirectional connection between two zones."""
 
@@ -29,7 +29,7 @@ class Connection(BaseModel):
 class Drone(BaseModel):
     """Represent a drone in the simulation."""
 
-    dorne_id: int
+    drone_id: int
     current_zone: Zone
     path: list[Zone] = Field(default_factory=list)
     path_index: int
@@ -74,6 +74,24 @@ class Graph(BaseModel):
                 neighbors.append(connection.zone_a)
 
         return neighbors
+
+    def get_connection(
+    self,
+    zone_a: Zone,
+    zone_b: Zone,
+) -> Connection | None:
+        """Return the connection between two zones, if it exists."""
+        for connection in self.connections:
+            if (
+                connection.zone_a == zone_a
+                and connection.zone_b == zone_b
+            ) or (
+                connection.zone_a == zone_b
+                and connection.zone_b == zone_a
+            ):
+                return connection
+
+        return None
 
 
 class Metadata(BaseModel):

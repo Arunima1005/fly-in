@@ -305,3 +305,43 @@ def test_no_path_through_blocked_zones() -> None:
     path = dijkstra.find_path(a, d)
 
     assert path is None
+
+
+def test_get_connection() -> None:
+    a = Zone(name="A", x=0, y=0)
+    b = Zone(name="B", x=1, y=0)
+    connection = Connection(
+        zone_a=a,
+        zone_b=b,
+        max_link_capacity=2,
+    )
+    graph = Graph(
+        zones={"A": a, "B": b},
+        connections=[connection],
+    )
+
+    assert graph.get_connection(a, b) == connection
+
+
+def test_get_connection_is_bidirectional() -> None:
+    a = Zone(name="A", x=0, y=0)
+    b = Zone(name="B", x=1, y=0)
+    connection = Connection(zone_a=a, zone_b=b)
+    graph = Graph(
+        zones={"A": a, "B": b},
+        connections=[connection],
+    )
+
+    assert graph.get_connection(b, a) == connection
+
+
+def test_get_connection_not_found() -> None:
+    a = Zone(name="A", x=0, y=0)
+    b = Zone(name="B", x=1, y=0)
+    c = Zone(name="C", x=2, y=0)
+    graph = Graph(
+        zones={"A": a, "B": b, "C": c},
+        connections=[Connection(zone_a=a, zone_b=b)],
+    )
+
+    assert graph.get_connection(a, c) is None
