@@ -1,7 +1,7 @@
 import pytest
 
 from src.model import Graph, Zone, ZoneType, Connection
-from dijkstra_old import Dijkstra
+from src.dijkstra import Dijkstra
 
 
 def create_zone(name: str, zone_type: ZoneType = ZoneType.NORMAL) -> Zone:
