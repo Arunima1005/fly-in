@@ -33,6 +33,7 @@ class Drone(BaseModel):
     current_zone: Zone
     path: list[Zone] = Field(default_factory=list)
     path_index: int
+    movement_remaining: int = 0
 
 
 class Graph(BaseModel):

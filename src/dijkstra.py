@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 import heapq
+from collections import Counter
 
-from model import Graph, Zone, ZoneType  # use your actual module here
+from .model import Graph, Zone, ZoneType  # use your actual module here
 
 
 @dataclass
@@ -15,13 +16,31 @@ class DijkstraEntry:
 class Dijkstra:
     """Find the minimum-cost path between zones, preferring paths that
     pass through more priority zones whenever two paths tie on cost."""
+    CONGESTION_WEIGHT = 0.01
 
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
 
-    def find_path(self, start: Zone, end: Zone) -> list[Zone] | None:
-        """Return the minimum-cost path, breaking cost ties in favor of
-        the path that visits the most priority zones."""
+    def find_path(
+    self,
+    start: Zone,
+    end: Zone,
+    zone_usage: "Counter[str] | None" = None,
+) -> list[Zone] | None:
+        """Return the minimum-cost path, breaking cost ties first in
+        favor of the path with more priority zones, then in favor of
+        the path whose zones have been used by fewer earlier drones.
+
+        `zone_usage` is a running count of how many already-planned
+        drones pass through each zone. Pass the same Counter in for
+        every drone in a fleet (updating it after each drone is
+        planned) and later drones will naturally prefer an alternate,
+        equally-cheap route over a route earlier drones already took.
+        Leave it out for a plain single-drone lookup.
+        """
+        if zone_usage is None:
+            zone_usage = Counter()
+
         if start.name not in self.graph.zones:
             return None
 
@@ -56,9 +75,6 @@ class Dijkstra:
         visited: set[str] = set()
 
         while queue:
-            # The popped priority value is ignored here on purpose -- it's
-            # read back from current_entry.priority_count below instead,
-            # which is guaranteed to hold the same number (see note above).
             current_cost, _neg_priority, current_name = heapq.heappop(queue)
 
             if current_name in visited:
@@ -77,7 +93,9 @@ class Dijkstra:
                 if neighbor.zone_type == ZoneType.BLOCKED:
                     continue
 
-                movement_cost = 2 if neighbor.zone_type == ZoneType.RESTRICTED else 1
+                base_cost = 2 if neighbor.zone_type == ZoneType.RESTRICTED else 1
+                congestion = self.CONGESTION_WEIGHT * zone_usage[neighbor.name]
+                movement_cost = base_cost + congestion
                 is_priority = neighbor.zone_type == ZoneType.PRIORITY
 
                 new_cost = current_cost + movement_cost

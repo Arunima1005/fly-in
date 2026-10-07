@@ -3,7 +3,7 @@ from pathlib import Path
 from .model import Drone
 from .simulation import Simulation
 from .map_selector import MapSelector
-from .parse import MapParser
+from .parse import MapParser, ParserError
 
 
 def main() -> None:
@@ -13,19 +13,21 @@ def main() -> None:
     difficulty = selector.select_difficulty()
     map_path = selector.select_map(difficulty)
 
-    # print(f"\nSelected map: {map_path}")
     mp = MapParser()
-    mp.parse_file(map_path)
+    try:
+        mp.parse_file(map_path)
+    except ParserError as error:
+        print(f"Error: {error}")
+        return
     print(mp.graph)
     print(mp.nb_drones)
-
-    start_zone = mp.graph.get_zone("start")
+    
+    start_zone = mp.start_zone
 
     if start_zone is None:
         raise ValueError("Start zone not found")
-
-    end_zone = mp.graph.get_zone("goal")
-
+    
+    end_zone = mp.end_zone
     if end_zone is None:
         raise ValueError("Goal zone not found")
 

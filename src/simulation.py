@@ -1,5 +1,5 @@
-from dijkstra import Dijkstra
-from model import Drone, Zone, Connection, Graph
+from .dijkstra import Dijkstra
+from .model import Drone, Zone, Connection, Graph, ZoneType
 
 from collections import Counter
 
@@ -13,20 +13,24 @@ class Simulation:
         self.turn = 0
         self.end_zone = end_zone
         self.start_zone = start_zone
+
         
     def assign_paths(self) -> None:
         """Calculate and assign a path to every drone."""
         dijkstra = Dijkstra(self.graph)
+        zone_usage: Counter[str] = Counter()
         for drone in self.drones:
             path: list[Zone] = dijkstra.find_path(
                         self.start_zone,
                         self.end_zone,
+                        zone_usage,
                     )
             if path is None:
                 raise ValueError("No path found from start to end")
             drone.path = path
             drone.path_index = 0
-
+            for zone in path:
+                zone_usage[zone.name] += 1
 
     def check_zone_capacity(
         self,
@@ -68,6 +72,8 @@ class Simulation:
         next_moves: dict[int, Zone] = {}
 
         for drone in self.drones:
+            if drone.movement_remaining > 0:
+                continue
             if (
                 drone.path
                 and drone.current_zone == drone.path[drone.path_index]
@@ -143,21 +149,37 @@ class Simulation:
         for drone_id, next_zone in valid_moves.items():
             for drone in self.drones:
                 if drone.drone_id == drone_id:
-                    drone.current_zone = next_zone
-                    drone.path_index += 1
+                    if next_zone.zone_type == ZoneType.RESTRICTED:
+                        drone.movement_remaining = 1
+                    else:
+                        drone.current_zone = next_zone
+                        drone.path_index += 1
 
     def run_turn(self) -> bool:
         """Execute one simulation turn."""
+        moved_drones: set[int] = set()
+        moved = False
+
+        for drone in self.drones:
+            if drone.movement_remaining > 0:
+                drone.current_zone = drone.path[drone.path_index + 1]
+                drone.path_index += 1
+                drone.movement_remaining = 0
+                moved = True
+                moved_drones.add(drone.drone_id)
         next_moves = self.next_moved_list()
+        for drone_id in moved_drones:
+            next_moves.pop(drone_id, None)
         valid_moves = self.filter_connection_moves(next_moves)
 
-        if not valid_moves:
-            return False
+        if valid_moves:
+            self.apply_moves(valid_moves)
+            moved = True
 
-        self.apply_moves(valid_moves)
-        self.turn += 1
+        if moved:
+            self.turn += 1
 
-        return True
+        return moved
 
     def all_drones_finished(self) -> bool:
         """Return True when all drones have reached the end zone."""
