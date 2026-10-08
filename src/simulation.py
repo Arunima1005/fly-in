@@ -70,7 +70,7 @@ class Simulation:
         dijkstra = Dijkstra(self.graph)
         zone_usage: Counter[str] = Counter()
         for drone in self.drones:
-            path: list[Zone] = dijkstra.find_path(
+            path: list[Zone] | None = dijkstra.find_path(
                         self.start_zone,
                         self.end_zone,
                         zone_usage,
