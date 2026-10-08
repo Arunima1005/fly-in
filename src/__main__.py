@@ -19,8 +19,6 @@ def main() -> None:
     except ParserError as error:
         print(f"Error: {error}")
         return
-    print(mp.graph)
-    print(mp.nb_drones)
     
     start_zone = mp.start_zone
 

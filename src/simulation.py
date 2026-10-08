@@ -2,7 +2,17 @@ from .dijkstra import Dijkstra
 from .model import Drone, Zone, Connection, Graph, ZoneType
 
 from collections import Counter
+# Terminal colors
+RESET = "\033[0m"
+BOLD = "\033[1m"
 
+CYAN = "\033[96m"
+BLUE = "\033[94m"
+YELLOW = "\033[93m"
+GREEN = "\033[92m"
+RED = "\033[91m"
+WHITE = "\033[97m"
+MAGENTA = "\033[95m"
 
 class Simulation:
     """Manage drones and advance the simulation turn by turn."""
@@ -14,7 +24,7 @@ class Simulation:
         self.end_zone = end_zone
         self.start_zone = start_zone
 
-        
+
     def assign_paths(self) -> None:
         """Calculate and assign a path to every drone."""
         dijkstra = Dijkstra(self.graph)
@@ -27,6 +37,7 @@ class Simulation:
                     )
             if path is None:
                 raise ValueError("No path found from start to end")
+            
             drone.path = path
             drone.path_index = 0
             for zone in path:
@@ -187,25 +198,73 @@ class Simulation:
 
     def run(self) -> None:
         """Run the simulation until all drones reach the end."""
+
         self.assign_paths()
+        self.print_header()
+
         while not self.all_drones_finished():
             moved = self.run_turn()
 
             if not moved:
-                break
+                print(f"{RED}Simulation stopped: no drones can move.{RESET}")
+                return
+
             self.print_status()
+
+        self.print_summary()
+
+    def print_header(self) -> None:
+        """Print the simulation header."""
+
+        print()
+        print(f"{CYAN}{'=' * 60}{RESET}")
+        print(f"{BOLD}{CYAN}              FLY-IN - DRONE SIMULATION{RESET}")
+        print(f"{CYAN}{'=' * 60}{RESET}")
+        print()
+
+        print(f"{BOLD}{CYAN}SIMULATION INFO{RESET}")
+        print(f"{GREEN}✓ Drones : {len(self.drones)}{RESET}")
+        print(f"{GREEN}✓ Start  : {self.start_zone.name}{RESET}")
+        print(f"{GREEN}✓ End    : {self.end_zone.name}{RESET}")
+        print()
+
+        print(f"{CYAN}{'-' * 60}{RESET}")
+        print(f"{BOLD}{CYAN}                    SIMULATION{RESET}")
+        print(f"{CYAN}{'-' * 60}{RESET}")
+
 
     def print_status(self) -> None:
         """Print the current position of every drone."""
+
         positions = []
 
         for drone in self.drones:
-            positions.append(
-                f"D{drone.drone_id}={drone.current_zone.name}"
-            )
+            if drone.current_zone == self.end_zone:
+                positions.append(
+                    f"{GREEN}D{drone.drone_id}-{drone.current_zone.name}{RESET}"
+                )
+            elif drone.current_zone == self.start_zone:
+                positions.append(
+                    f"{MAGENTA}D{drone.drone_id}-{drone.current_zone.name}{RESET}"
+                )
+            else:
+                positions.append(
+                    f"{WHITE}D{drone.drone_id}-{drone.current_zone.name}{RESET}"
+                )
 
-        print(f"Turn {self.turn}: {', '.join(positions)}")
+        print(
+            f"{YELLOW}Turn {self.turn:02d}{RESET}  "
+            + " ".join(positions)
+        )
 
+    def print_summary(self) -> None:
+        """Print the simulation summary."""
+
+        print()
+        print(f"{CYAN}{'=' * 60}{RESET}")
+        print(f"{BOLD}{CYAN}✓ SIMULATION COMPLETED{RESET}")
+        print(f"{YELLOW}  {self.turn} turns{RESET}")
+        print(f"{CYAN}{'=' * 60}{RESET}")
 
     def count_zone_departures(
     self,
