@@ -1,7 +1,9 @@
 from .dijkstra import Dijkstra
 from .model import Drone, Zone, Connection, Graph, ZoneType
 
+import sys
 from collections import Counter
+
 # Terminal colors
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -14,15 +16,53 @@ RED = "\033[91m"
 WHITE = "\033[97m"
 MAGENTA = "\033[95m"
 
+# 256-color codes for the color names used in map metadata. Any color
+# not listed here is printed without color.
+ZONE_COLORS: dict[str, str] = {
+    "black": "\033[38;5;245m",
+    "blue": "\033[38;5;33m",
+    "brown": "\033[38;5;130m",
+    "crimson": "\033[38;5;161m",
+    "cyan": "\033[38;5;51m",
+    "darkred": "\033[38;5;88m",
+    "gold": "\033[38;5;220m",
+    "gray": "\033[38;5;244m",
+    "green": "\033[38;5;40m",
+    "grey": "\033[38;5;244m",
+    "lime": "\033[38;5;118m",
+    "magenta": "\033[38;5;201m",
+    "maroon": "\033[38;5;52m",
+    "orange": "\033[38;5;208m",
+    "pink": "\033[38;5;211m",
+    "purple": "\033[38;5;93m",
+    "red": "\033[38;5;196m",
+    "violet": "\033[38;5;177m",
+    "white": "\033[38;5;255m",
+    "yellow": "\033[38;5;226m",
+}
+
+
 class Simulation:
     """Manage drones and advance the simulation turn by turn."""
 
-    def __init__(self, graph: Graph, drones: list[Drone], end_zone: Zone, start_zone: Zone,) -> None:
+    def __init__(
+        self,
+        graph: Graph,
+        drones: list[Drone],
+        end_zone: Zone,
+        start_zone: Zone,
+        verbose: bool = False,
+    ) -> None:
         self.graph = graph
         self.drones = drones
         self.turn = 0
         self.end_zone = end_zone
         self.start_zone = start_zone
+        self.verbose = verbose
+        # Moves made during the last turn as (drone, zone, label), where
+        # label is the zone name or, for a drone taking off toward a
+        # restricted zone, the connection name.
+        self.turn_moves: list[tuple[Drone, Zone, str]] = []
 
 
     def assign_paths(self) -> None:
@@ -43,145 +83,138 @@ class Simulation:
             for zone in path:
                 zone_usage[zone.name] += 1
 
-    def check_zone_capacity(
-        self,
-        drone: Drone,
-        next_zone: Zone,
-        zone_usage: Counter[str],
-        departures: Counter[str],
-    ) -> bool:
-        """Check whether a drone can enter the next zone."""
-        if next_zone == self.end_zone:
-            return True
-        count = 0
-        for drone in self.drones:
-            if drone.current_zone == next_zone:
-                count += 1
-        return (
-            count
-            - departures[next_zone.name]
-            + zone_usage[next_zone.name]
-            + 1
-            <= next_zone.max_drones
-        )
+    def is_unlimited(self, zone: Zone) -> bool:
+        """Return True for zones without a capacity limit (start and end)."""
+        return zone == self.start_zone or zone == self.end_zone
 
-    def check_connection_capacity(
-        self,
-        from_zone: Zone,
-        to_zone: Zone,
-        count: int,
-    ) -> bool:
-        """Check whether the connection has capacity for the proposed moves."""
-        conn = self.graph.get_connection(from_zone, to_zone)
+    def occupied_zone(self, drone: Drone) -> Zone:
+        """Return the zone a drone counts against for capacity.
 
-        if conn is None:
-            return False
+        A drone flying toward a restricted zone has already left its
+        origin and has a reserved spot in its destination, so it is
+        guaranteed to be able to land on the next turn.
+        """
+        if drone.movement_remaining > 0:
+            return drone.path[drone.path_index + 1]
+        return drone.current_zone
 
-        return count <= conn.max_link_capacity
+    def connection_key(self, zone_a: Zone, zone_b: Zone) -> tuple[str, str]:
+        """Return an order-independent key for a connection."""
+        if zone_a.name <= zone_b.name:
+            return (zone_a.name, zone_b.name)
+        return (zone_b.name, zone_a.name)
 
     def next_moved_list(self) -> dict[int, Zone]:
+        """Return the next zone each grounded drone wants to move to."""
         next_moves: dict[int, Zone] = {}
 
         for drone in self.drones:
             if drone.movement_remaining > 0:
                 continue
-            if (
-                drone.path
-                and drone.current_zone == drone.path[drone.path_index]
-                and drone.path_index + 1 < len(drone.path)
-            ):
-                next_zone: Zone = drone.path[drone.path_index + 1]
-                next_moves[drone.drone_id] = next_zone
+            if drone.path and drone.path_index + 1 < len(drone.path):
+                next_moves[drone.drone_id] = drone.path[drone.path_index + 1]
 
         return next_moves
 
-    def count_connection_usage(self) -> Counter[tuple[str, str]]:
-        next_moves: dict[int, Zone] = self.next_moved_list()
-        connections: list[tuple[str, str]] = []
-        for drone_id, next_zone in next_moves.items():
-            for drone in self.drones:
-                if drone.drone_id == drone_id:
-                    current_zone = drone.current_zone
-            # Bidirectional connection - sorted
-            if self.graph.get_connection(current_zone, next_zone):
-                connections.append(tuple(sorted((current_zone.name, next_zone.name))))
-        return Counter(connections)
+    def select_moves(
+        self,
+        next_moves: dict[int, Zone],
+        occupancy: Counter[str],
+        link_usage: Counter[tuple[str, str]],
+    ) -> dict[int, Zone]:
+        """Choose which requested moves can happen this turn.
 
-    def validate_connection_usage(self) -> bool:
-        count_connection: dict[tuple[str, str], int] = self.count_connection_usage()
+        A zone only gains free space when a drone really leaves it, so
+        moves are accepted one at a time and the occupancy is updated
+        after each one. Passes repeat until nothing changes, which lets
+        a drone follow another one that was accepted later in the pass.
+        Drones furthest along their path go first to clear the way.
+        """
+        drones_by_id = {drone.drone_id: drone for drone in self.drones}
+        pending = sorted(
+            next_moves,
+            key=lambda drone_id: -drones_by_id[drone_id].path_index,
+        )
+        accepted: dict[int, Zone] = {}
 
-        for (from_zone, to_zone), count in count_connection.items():
+        changed = True
+        while changed:
+            changed = False
+            for drone_id in list(pending):
+                drone = drones_by_id[drone_id]
+                next_zone = next_moves[drone_id]
+                connection = self.graph.get_connection(
+                    drone.current_zone,
+                    next_zone,
+                )
+                if connection is None:
+                    pending.remove(drone_id)
+                    continue
 
-            from_zone_obj = self.graph.get_zone(from_zone)
-            to_zone_obj = self.graph.get_zone(to_zone)
+                key = self.connection_key(drone.current_zone, next_zone)
+                if link_usage[key] + 1 > connection.max_link_capacity:
+                    continue
+                if (
+                    not self.is_unlimited(next_zone)
+                    and occupancy[next_zone.name] + 1 > next_zone.max_drones
+                ):
+                    continue
 
-            if from_zone_obj is None or to_zone_obj is None:
-                return False
-            if not self.check_connection_capacity(
-                from_zone_obj,
-                to_zone_obj,
-                count,
-            ):
-                return False
-        return True
+                accepted[drone_id] = next_zone
+                pending.remove(drone_id)
+                link_usage[key] += 1
+                occupancy[drone.current_zone.name] -= 1
+                occupancy[next_zone.name] += 1
+                changed = True
 
-    def filter_connection_moves(
-    self,
-    next_moves: dict[int, Zone],
-) -> dict[int, Zone]:
-        """Keep moves that respect connection capacity."""
-        valid_move: dict[int, Zone] = {}
-        connection_usage: Counter[tuple[str, str]] = Counter()
-        zone_usage: Counter[str] = Counter()
-        departures = self.count_zone_departures(next_moves)
-        
-        for drone_id, next_zone in next_moves.items():
-            for drone in self.drones:
-                if drone.drone_id == drone_id:
-                    current_zone = drone.current_zone
-
-                    connection_key = tuple(
-                        sorted((current_zone.name, next_zone.name))
-                    )
-
-                    current_usage = connection_usage[connection_key]
-                    connection = self.graph.get_connection(current_zone, next_zone,)
-                    if connection is None:
-                        continue
-                    if current_usage + 1 <= connection.max_link_capacity and self.check_zone_capacity(drone, next_zone, zone_usage, departures,):
-                        valid_move[drone_id] = next_zone
-                        connection_usage[connection_key] += 1
-                        zone_usage[next_zone.name] += 1
-        return valid_move
+        return accepted
 
     def apply_moves(self, valid_moves: dict[int, Zone]) -> None:
         """Apply the accepted drone moves."""
-
-        for drone_id, next_zone in valid_moves.items():
-            for drone in self.drones:
-                if drone.drone_id == drone_id:
-                    if next_zone.zone_type == ZoneType.RESTRICTED:
-                        drone.movement_remaining = 1
-                    else:
-                        drone.current_zone = next_zone
-                        drone.path_index += 1
+        for drone in self.drones:
+            next_zone = valid_moves.get(drone.drone_id)
+            if next_zone is None:
+                continue
+            if next_zone.zone_type == ZoneType.RESTRICTED:
+                drone.movement_remaining = 1
+                label = f"{drone.current_zone.name}-{next_zone.name}"
+            else:
+                drone.current_zone = next_zone
+                drone.path_index += 1
+                label = next_zone.name
+            self.turn_moves.append((drone, next_zone, label))
 
     def run_turn(self) -> bool:
         """Execute one simulation turn."""
-        moved_drones: set[int] = set()
+        occupancy: Counter[str] = Counter(
+            self.occupied_zone(drone).name for drone in self.drones
+        )
+        link_usage: Counter[tuple[str, str]] = Counter()
+        landed: set[int] = set()
         moved = False
+        self.turn_moves = []
 
+        # Drones in flight must land now. Their destination spot was
+        # reserved at take-off, but they still use the connection for
+        # this turn, so it counts against the link capacity.
         for drone in self.drones:
             if drone.movement_remaining > 0:
-                drone.current_zone = drone.path[drone.path_index + 1]
+                destination = drone.path[drone.path_index + 1]
+                link_usage[
+                    self.connection_key(drone.current_zone, destination)
+                ] += 1
+                drone.current_zone = destination
                 drone.path_index += 1
                 drone.movement_remaining = 0
+                landed.add(drone.drone_id)
+                self.turn_moves.append((drone, destination, destination.name))
                 moved = True
-                moved_drones.add(drone.drone_id)
+
+        # A drone that just landed has used its move for this turn.
         next_moves = self.next_moved_list()
-        for drone_id in moved_drones:
+        for drone_id in landed:
             next_moves.pop(drone_id, None)
-        valid_moves = self.filter_connection_moves(next_moves)
+        valid_moves = self.select_moves(next_moves, occupancy, link_usage)
 
         if valid_moves:
             self.apply_moves(valid_moves)
@@ -200,18 +233,39 @@ class Simulation:
         """Run the simulation until all drones reach the end."""
 
         self.assign_paths()
-        self.print_header()
+        if self.verbose:
+            self.print_header()
 
         while not self.all_drones_finished():
             moved = self.run_turn()
 
             if not moved:
-                print(f"{RED}Simulation stopped: no drones can move.{RESET}")
+                print(
+                    f"{RED}Simulation stopped: no drones can move.{RESET}",
+                    file=sys.stderr,
+                )
                 return
 
-            self.print_status()
+            if self.verbose:
+                self.print_status()
+            else:
+                self.print_moves()
 
-        self.print_summary()
+        if self.verbose:
+            self.print_summary()
+
+    def print_moves(self) -> None:
+        """Print the movements from the last turn."""
+
+        moves = []
+
+        for drone, zone, label in sorted(
+            self.turn_moves,
+            key=lambda move: move[0].drone_id,
+        ):
+            moves.append(f"D{drone.drone_id}-{label}")
+
+        print(" ".join(moves))
 
     def print_header(self) -> None:
         """Print the simulation header."""
@@ -239,7 +293,13 @@ class Simulation:
         positions = []
 
         for drone in self.drones:
-            if drone.current_zone == self.end_zone:
+            if drone.movement_remaining > 0:
+                destination = drone.path[drone.path_index + 1]
+                positions.append(
+                    f"{RED}D{drone.drone_id}-"
+                    f"{drone.current_zone.name}-{destination.name}{RESET}"
+                )
+            elif drone.current_zone == self.end_zone:
                 positions.append(
                     f"{GREEN}D{drone.drone_id}-{drone.current_zone.name}{RESET}"
                 )
@@ -265,18 +325,3 @@ class Simulation:
         print(f"{BOLD}{CYAN}✓ SIMULATION COMPLETED{RESET}")
         print(f"{YELLOW}  {self.turn} turns{RESET}")
         print(f"{CYAN}{'=' * 60}{RESET}")
-
-    def count_zone_departures(
-    self,
-    next_moves: dict[int, Zone],
-) -> Counter[str]:
-        """Count drones leaving each zone during this turn."""
-        departures: Counter[str] = Counter()
-
-        for drone_id in next_moves:
-            for drone in self.drones:
-                if drone.drone_id == drone_id:
-                    departures[drone.current_zone.name] += 1
-                    break
-
-        return departures
