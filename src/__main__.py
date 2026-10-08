@@ -5,7 +5,9 @@ from .model import Drone
 from .simulation import Simulation
 from .map_selector import MapSelector
 from .parse import MapParser, ParserError
+import pygame
 
+from .ui import draw_graph
 
 def run_program(verbose: bool) -> None:
     """Select a map, parse it and run the simulation."""
@@ -17,6 +19,28 @@ def run_program(verbose: bool) -> None:
 
     mp = MapParser()
     mp.parse_file(map_path)
+
+    pygame.init()
+
+    screen = pygame.display.set_mode((1600, 1000))
+    pygame.display.set_caption("Fly-in")
+
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        screen.fill((30, 30, 30))
+
+        draw_graph(screen, mp.graph)
+
+        pygame.display.flip()
+
+    pygame.quit()
+
+
 
     start_zone = mp.start_zone
     end_zone = mp.end_zone
@@ -30,7 +54,7 @@ def run_program(verbose: bool) -> None:
         )
 
     simulation = Simulation(mp.graph, drones, end_zone, start_zone, verbose)
-    simulation.run()
+    # simulation.run()
 
 
 def main() -> None:

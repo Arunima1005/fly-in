@@ -8,6 +8,7 @@ dependencies = [
     "flake8",
     "mypy",
     "pytest",
+    "pygame>=2.6.1",
 ]
 
 [tool.mypy]
