@@ -7,7 +7,7 @@ from .map_selector import MapSelector
 from .parse import MapParser, ParserError
 import pygame
 
-from .ui import draw_graph
+from .ui import draw_graph, draw_legend, make_sky_background
 
 def run_program(verbose: bool) -> None:
     """Select a map, parse it and run the simulation."""
@@ -24,6 +24,7 @@ def run_program(verbose: bool) -> None:
 
     screen = pygame.display.set_mode((1600, 1000))
     pygame.display.set_caption("Fly-in")
+    background = make_sky_background(*screen.get_size())
 
     running = True
 
@@ -32,9 +33,10 @@ def run_program(verbose: bool) -> None:
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.fill((30, 30, 30))
+        screen.blit(background, (0, 0))
 
         draw_graph(screen, mp.graph)
+        draw_legend(screen)
 
         pygame.display.flip()
 
