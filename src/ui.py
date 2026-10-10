@@ -291,9 +291,6 @@ def draw_drone_badge(
     screen.blit(text, text.get_rect(center=center))
 
 
-def draw_drone_turn(screen: pygame.Surface, ) -> None:
-    pass
-
 @lru_cache(maxsize=1)
 def details_font() -> pygame.font.Font:
     """Create the font for the info panels once."""
@@ -359,6 +356,22 @@ def draw_stats_panel(
             ),
         )
 
+def draw_controls_hint(screen: pygame.Surface) -> None:
+    """Show the keyboard controls at the bottom center."""
+    text = details_font().render(
+        "Space:  pause / resume    ·    Esc:  quit",
+        True,
+        (40, 45, 55),
+    )
+    padding = 10
+    width = text.get_width() + padding * 2
+    height = text.get_height() + padding * 2
+    left = (screen.get_width() - width) // 2
+    top = 20
+
+    draw_panel_background(screen, (left, top, width, height))
+    screen.blit(text, (left + padding, top + padding))
+
 
 def draw_legend(screen: pygame.Surface) -> None:
     """Draw which shape stands for which zone type (bottom-left)."""
@@ -414,3 +427,4 @@ def draw_map_details(
     """Draw the stats panel and the shape legend."""
     draw_stats_panel(screen, no_of_drones, no_of_zones, turn, status)
     draw_legend(screen)
+    draw_controls_hint(screen)
