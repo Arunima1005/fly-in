@@ -1,24 +1,25 @@
 import os
 import sys
 from pathlib import Path
-
+import argparse
 from .model import Drone
 from .simulation import Simulation
 from .map_selector import MapSelector
 from .parse import MapParser, ParserError
 
-USAGE = "Usage: python -m src [--verbose] [--visual]"
-VALID_FLAGS = {"--verbose", "--visual"}
 
+class VisualError(Exception):
+    """Raised when the pygame window cannot be used."""
 
-def run_program(verbose: bool, visual: bool) -> None:
+def run_program(verbose: bool, visual: bool, map_file: Path | None) -> None:
     """Select a map, parse it and run the simulation."""
-    maps_directory = Path(__file__).resolve().parent.parent / "maps"
-
-    selector = MapSelector(maps_directory)
-    difficulty = selector.select_difficulty()
-    map_path = selector.select_map(difficulty)
-
+    if map_file is None:
+        maps_directory = Path(__file__).resolve().parent.parent / "maps"
+        selector = MapSelector(maps_directory)
+        difficulty = selector.select_difficulty()
+        map_path = selector.select_map(difficulty)
+    else:
+        map_path = map_file     
     mp = MapParser()
     mp.parse_file(map_path)
 
@@ -42,26 +43,52 @@ def run_program(verbose: bool, visual: bool) -> None:
     # Imported here so the terminal mode works without pygame/a display.
     os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
     from .visualizer import run_visual
+    import pygame
 
     simulation.assign_paths()
     if verbose:
         simulation.print_header()
-    run_visual(simulation, mp.graph, start_zone, end_zone)
+    try:
+        run_visual(simulation, mp.graph, start_zone, end_zone)
+    except pygame.error as error:
+        raise VisualError(f"Cannot open the visualizer: {error}") from error
+    finally:
+        pygame.quit()
+    # run_visual(simulation, mp.graph, start_zone, end_zone)
     if verbose and simulation.all_drones_finished():
         simulation.print_summary()
 
 
 def main() -> None:
     """Run the program and report errors without crashing."""
-    flags = sys.argv[1:]
-    unknown = [flag for flag in flags if flag not in VALID_FLAGS]
-    if unknown:
-        print(f"Error: unknown option {unknown[0]}", file=sys.stderr)
-        print(USAGE, file=sys.stderr)
-        sys.exit(1)
+    USAGE = "Usage: python -m src [--verbose] [--visual]"
+    # VALID_FLAGS = {"--verbose", "--visual"}
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output"
+        )
+
+    parser.add_argument(
+        "--visual",
+        action="store_true",
+        help="Enable visual mode"
+    )
+
+    parser.add_argument(
+        "--file",
+        type=Path,
+        default=None,
+        help="Path of map"
+    )
+
+    args = parser.parse_args()
 
     try:
-        run_program("--verbose" in flags, "--visual" in flags)
+        run_program(args.verbose, args.visual, args.file)
     except (ParserError, ValueError, FileNotFoundError) as error:
         print(f"Error: {error}", file=sys.stderr)
         sys.exit(1)

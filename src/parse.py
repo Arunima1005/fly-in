@@ -173,13 +173,28 @@ class MapParser:
         """Read and parse a map file."""
         try:
             with path.open("r", encoding="utf-8") as file:
-                for line in file:
-                    self.parse_line(line)
+                for line_number, line in enumerate(file, start=1):
+                    try:
+                        self.parse_line(line)
+                    except (ParserError, ValueError) as error:
+                        raise ParserError(
+                            f"Line {line_number}: {error}"
+                        ) from error
                 if not self.first_line:
                     raise ParserError("Map is missing nb_drones")
                 if self.start_zone is None:
                     raise ParserError("Map is missing start_hub")
                 if self.end_zone is None:
                     raise ParserError("Map is missing end_hub")
+        except FileNotFoundError as exc:
+            raise ParserError(f"Map file not found: {path}") from exc
+        except IsADirectoryError as exc:
+            raise ParserError(f"{path} is a directory, not a map file") from exc
+        except PermissionError as exc:
+            raise ParserError(f"No permission to read map file: {path}") from exc
+        except UnicodeDecodeError as exc:
+            raise ParserError(f"{path} is not a text file") from exc
         except OSError as exc:
-            raise ParserError(f"Could not read map file: {path}") from exc
+            raise ParserError(
+                f"Could not read map file {path}: {exc.strerror}"
+            ) from exc

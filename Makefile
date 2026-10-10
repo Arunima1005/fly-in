@@ -8,13 +8,13 @@ install:
 	uv sync
 
 run:
-	$(PYTHON) -m src
+	@$(PYTHON) -m src $(if $(MAP),--file $(MAP)) || true
 
 run-verbose:
-	$(PYTHON) -m src --verbose
+	@$(PYTHON) -m src --verbose $(if $(MAP),--file $(MAP)) || true
 
 run-visual:
-	$(PYTHON) -m src --visual
+	@$(PYTHON) -m src --visual $(if $(MAP),--file $(MAP)) || true
 
 debug:
 	$(PYTHON) -m pdb -m src
