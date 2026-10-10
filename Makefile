@@ -2,7 +2,7 @@ NAME = fly-in
 
 PYTHON = uv run python
 
-.PHONY: install run run-verbose debug clean lint
+.PHONY: install run run-verbose run-visual debug clean lint
 
 install:
 	uv sync
@@ -12,6 +12,9 @@ run:
 
 run-verbose:
 	$(PYTHON) -m src --verbose
+
+run-visual:
+	$(PYTHON) -m src --visual
 
 debug:
 	$(PYTHON) -m pdb -m src

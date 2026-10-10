@@ -246,13 +246,17 @@ class Simulation:
                 )
                 return
 
-            if self.verbose:
-                self.print_status()
-            else:
-                self.print_moves()
+            self.print_turn()
 
         if self.verbose:
             self.print_summary()
+
+    def print_turn(self) -> None:
+        """Print the last turn: detailed with --verbose, plain otherwise."""
+        if self.verbose:
+            self.print_status()
+        else:
+            self.print_moves()
 
     def print_moves(self) -> None:
         """Print the movements from the last turn."""
