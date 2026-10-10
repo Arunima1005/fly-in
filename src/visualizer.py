@@ -41,14 +41,20 @@ def run_visual(
     Each turn is also printed to the terminal, same as without --visual.
     """
     pygame.init()
+    display = pygame.display.Info()
+    width = int(display.current_w * 0.85)
+    height = int(display.current_h * 0.85)
 
-    screen = pygame.display.set_mode((1600, 1000))
+    screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+
+    # screen = pygame.display.set_mode((1600, 1000))
     pygame.display.set_caption("Fly-in")
 
     background = make_sky_background(*screen.get_size())
     drone_image = load_drone_image()
 
     running = True
+    paused = False
     clock = pygame.time.Clock()
     simulation_active = True
     animation_duration = 1.0
@@ -63,14 +69,17 @@ def run_visual(
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_SPACE:
+                    paused = not paused
 
         current_time = perf_counter()
         delta_time = current_time - last_time
         last_time = current_time
 
-        if simulation_active:
+        if simulation_active and not paused:
             animation_progress += delta_time / animation_duration
 
             if animation_progress >= 1.0 + turn_pause / animation_duration:
@@ -124,11 +133,20 @@ def run_visual(
             drone_image,
             visual_positions,
         )
+
+        if simulation.all_drones_finished():
+            status = "Finished"
+        elif paused:
+            status = "Paused"
+        else:
+            status = "Running"
+
         draw_map_details(
             screen,
             len(simulation.drones),
             len(graph.zones),
             simulation.turn,
+            status
         )
 
         pygame.display.flip()

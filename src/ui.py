@@ -321,6 +321,7 @@ def draw_stats_panel(
     no_of_drones: int,
     no_of_zones: int,
     turn: int,
+    status: str
 ) -> None:
     """Draw drone count, zone count and current turn (top-left)."""
     font = details_font()
@@ -328,6 +329,7 @@ def draw_stats_panel(
         ("Drones", str(no_of_drones)),
         ("Zones", str(no_of_zones)),
         ("Turn", str(turn)),
+        ("Status", status),
     ]
 
     padding = 12
@@ -374,8 +376,8 @@ def draw_legend(screen: pygame.Surface) -> None:
     row_height = 28
     panel_width = 170
     panel_height = padding * 2 + row_height * len(entries)
-    left = 20
-    top = screen.get_height() - panel_height - 20
+    left = screen.get_width() - panel_width - 20
+    top = 20
 
     draw_panel_background(screen, (left, top, panel_width, panel_height))
 
@@ -407,7 +409,8 @@ def draw_map_details(
     no_of_drones: int,
     no_of_zones: int,
     turn: int,
+    status: str
 ) -> None:
     """Draw the stats panel and the shape legend."""
-    draw_stats_panel(screen, no_of_drones, no_of_zones, turn)
+    draw_stats_panel(screen, no_of_drones, no_of_zones, turn, status)
     draw_legend(screen)
