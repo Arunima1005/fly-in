@@ -42,8 +42,9 @@ def run_program(verbose: bool, visual: bool, map_file: Path | None) -> None:
 
     # Imported here so the terminal mode works without pygame/a display.
     os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
-    from .visualizer import run_visual
     import pygame
+    from .visualizer import run_visual
+
 
     simulation.assign_paths()
     if verbose:
