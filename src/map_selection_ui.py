@@ -10,6 +10,7 @@ class MapSelectionUI:
     DIFFICULTIES = ["easy", "medium", "hard", "challenger"]
 
     def __init__(self, screen: pygame.Surface) -> None:
+        """Store the window and prepare fonts and button colors."""
         self.screen = screen
         self.font = pygame.font.SysFont(None, 36)
         self.title_font = pygame.font.SysFont(None, 52)
