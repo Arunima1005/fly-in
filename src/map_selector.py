@@ -3,6 +3,7 @@ from pathlib import Path
 
 class MapSelector:
     """Handle difficulty and map selection."""
+    DEFAULT_DIRECTORY = Path(__file__).resolve().parent.parent / "maps"
 
     def __init__(self, maps_directory: Path):
         """Store the folder that holds the difficulty subfolders."""

@@ -65,15 +65,24 @@ python3 -m src [--file MAP] [--verbose] [--visual]
 | Option | Effect |
 |---|---|
 | *(none)* | Plain output in the required format, one line per turn |
-| `--file MAP` | Use this map file. Without it, a menu lets you pick a difficulty and a map from `maps/` |
+| `--file MAP` | Use this map file. Without it, a menu lets you pick a difficulty and a map from `maps/` (in the terminal, or in the window with `--visual`) |
 | `--verbose` | Colored, detailed terminal output: every drone's position each turn, plus a summary |
-| `--visual` | Opens the pygame window. The turns are still printed in the terminal |
+| `--visual` | Opens the pygame window, starting with a map menu (or directly with the `--file` map). The turns are still printed in the terminal |
 | `-h` | Show the help |
 
 The flags can be combined, for example `--visual --verbose`.
 
-In the pygame window: **Space** pauses and resumes, **Up** / **Down** change
-the animation speed (0.5x to 8x), **Esc** or the close button quits.
+In the pygame window:
+
+| Where | Key / action | Effect |
+|---|---|---|
+| Map menu | Click a button | Choose a difficulty, then a map (**Back** returns to the difficulties) |
+| Map menu | **Esc** | Back to the difficulties, or quit from the first screen |
+| Simulation | **Space** | Pause / resume |
+| Simulation | **Up** / **Down** | Animation speed (0.5x, 1x, 2x, 4x, 8x) |
+| Simulation | **M** | Back to the map menu, to run another map |
+| Simulation | **Esc** | Quit |
+| Anywhere | Close button | Quit |
 
 ### Other Makefile rules
 
@@ -296,6 +305,11 @@ in the verbose view you can see exactly where it is.
 
 ### Graphical window (`--visual`)
 
+- **Map menu:** the window opens with a menu. Buttons for the four
+  difficulties, then one button per map file, with a **Back** button. The
+  button under the mouse is highlighted. After a simulation, **M** brings
+  you back here, so several maps can be compared without restarting the
+  program. Each map always starts again from turn 0.
 - **The map:** zones are drawn at their coordinates and scaled to fit the
   window. Each zone uses the **color from the map file**. The start and end
   zones have an extra ring around them.
@@ -310,7 +324,8 @@ in the verbose view you can see exactly where it is.
 - **Stats panel:** number of drones and zones, the current turn, the
   status (Running, Paused or Finished) and the animation speed.
 - **Controls:** Space to pause and resume, Up / Down to change the speed
-  (0.5x, 1x, 2x, 4x, 8x), Esc to quit. The speed only changes the animation,
+  (0.5x, 1x, 2x, 4x, 8x), M for the map menu, Esc to quit. A hint at the top
+  of the window lists these keys. The speed only changes the animation,
   not the simulation or its output. The window can be resized, and the map
   is re-centered and re-scaled.
 - The terminal keeps printing each turn while the window is open, so the
@@ -324,15 +339,16 @@ to see from the text output alone.
 
 ```
 src/
-  __main__.py      command line options, error handling, chooses the mode
-  model.py         Zone, Connection, Drone, Graph (pydantic models)
-  parse.py         MapParser: reads and validates map files
-  dijkstra.py      Dijkstra: path planning with tie-breaking
-  simulation.py    Simulation: turn scheduling and terminal output
-  map_selector.py  MapSelector: interactive map menu
-  visualizer.py    Visualizer: pygame window
-maps/              provided maps (easy, medium, hard, challenger)
-assets/            drone image for the pygame window
+  __main__.py         command line options, error handling, chooses the mode
+  model.py            Zone, Connection, Drone, Graph (pydantic models)
+  parse.py            MapParser: reads and validates map files
+  dijkstra.py         Dijkstra: path planning with tie-breaking
+  simulation.py       Simulation: turn scheduling and terminal output
+  map_selector.py     MapSelector: map menu in the terminal
+  map_selection_ui.py MapSelectionUI: map menu in the pygame window
+  visualizer.py       Visualizer: pygame window
+maps/                 provided maps (easy, medium, hard, challenger)
+assets/               drone image for the pygame window
 ```
 
 ## Resources

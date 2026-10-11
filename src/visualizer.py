@@ -33,14 +33,25 @@ class Visualizer:
 
     SPEED_LEVELS = [0.5, 1.0, 2.0, 4.0, 8.0]
 
-    def __init__(self, simulation: Simulation) -> None:
+    def __init__(self, simulation: Simulation,
+                 screen: pygame.Surface | None = None,) -> None:
         """Open the window and load images and fonts."""
         pygame.display.init()
         pygame.font.init()
 
-        info = pygame.display.Info()
-        size = (int(info.current_w * 0.85), int(info.current_h * 0.85))
-        self.screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+        if screen is None:
+            info = pygame.display.Info()
+            size = (
+                int(info.current_w * 0.85),
+                int(info.current_h * 0.85),
+            )
+            self.screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+        else:
+            self.screen = screen
+
+        # info = pygame.display.Info()
+        # size = (int(info.current_w * 0.85), int(info.current_h * 0.85))
+        # self.screen = pygame.display.set_mode(size, pygame.RESIZABLE)
         pygame.display.set_caption("Fly-in")
 
         self.simulation = simulation
@@ -343,7 +354,7 @@ class Visualizer:
     def draw_controls_hint(self) -> None:
         """Show the keyboard controls at the bottom center."""
         text = self.font.render(
-            "Space: pause    ·    Up/Down: speed    ·    Esc: quit",
+            "M: menu    Space: pause    Up/Down: speed    Esc: quit",
             True,
             (40, 45, 55),
         )
@@ -431,7 +442,7 @@ class Visualizer:
 
     def run_visual(
         self,
-    ) -> None:
+    ) -> bool:
         """Animate the simulation turn by turn in a pygame window.
 
         Each turn is also printed to the terminal, same as without --visual.
@@ -439,6 +450,7 @@ class Visualizer:
 
         running = True
         paused = False
+        return_to_menu = False
         clock = pygame.time.Clock()
         simulation_active = True
         animation_duration = 1.0
@@ -455,6 +467,9 @@ class Visualizer:
                     running = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
+                        running = False
+                    elif event.key == pygame.K_m:
+                        return_to_menu = True
                         running = False
                     elif event.key == pygame.K_SPACE:
                         paused = not paused
@@ -537,3 +552,4 @@ class Visualizer:
 
             pygame.display.flip()
             clock.tick(60)
+        return return_to_menu
