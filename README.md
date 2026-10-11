@@ -343,23 +343,7 @@ assets/            drone image for the pygame window
 - [pygame documentation](https://www.pygame.org/docs/)
 - [mypy documentation](https://mypy.readthedocs.io/) and
   [flake8 documentation](https://flake8.pycqa.org/)
-
-### Use of AI
-
-An AI assistant (Claude) was used during the project for:
-
-- **Visualizer:** explaining pygame concepts (surfaces, drawing order,
-  transparency, events, window resizing), finding drawing bugs (zones
-  overlapping, wrong map position, restricted moves not visible), and
-  suggestions for the layout of the panels.
-- **Review:** checking the project against the subject and the evaluation
-  sheet, and writing small throw-away scripts to replay the output and check
-  the movement rules on all maps.
-- **Testing the algorithm:** comparing different congestion weights and
-  explaining the results (see *Design decision* above).
-- **Fixes:** a parser bug with metadata without `=`, clearer error messages,
-  updating the unit tests to the new messages, and adding missing docstrings.
-- **This README:** first draft, then reviewed and adjusted by me.
-
-All AI suggestions were reviewed, tested and adapted before being kept, and I
-can explain every part of the code.
+- **AI usage:** an AI assistant (Claude) was used to discuss design
+  decisions for the project, to learn about the pathfinding algorithm and
+  pygame, to help write the pytest tests and this README, and to help debug
+  some issues.
