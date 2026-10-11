@@ -2,7 +2,7 @@ NAME = fly-in
 
 PYTHON = uv run python
 
-.PHONY: install run run-verbose run-visual debug clean lint
+.PHONY: install run run-verbose run-visual debug clean lint lint-strict
 
 install:
 	uv sync
@@ -28,3 +28,7 @@ clean:
 lint:
 	$(PYTHON) -m flake8 .
 	$(PYTHON) -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+
+lint-strict:
+	$(PYTHON) -m flake8 .
+	$(PYTHON) -m mypy . --strict
