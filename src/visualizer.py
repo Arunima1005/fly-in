@@ -31,6 +31,8 @@ class Visualizer:
         "yellow": (255, 220, 0),
     }
 
+    SPEED_LEVELS = [0.5, 1.0, 2.0, 4.0, 8.0]
+
     def __init__(self, simulation: Simulation) -> None:
         """Open the window and load images and fonts."""
         pygame.display.init()
@@ -53,6 +55,12 @@ class Visualizer:
         self.offset_y = 0
         self.scale = 1.0
         self._calculate_map_layout()
+        self.speed_index = 1
+
+    @property
+    def speed(self) -> float:
+        """Current animation speed multiplier."""
+        return self.SPEED_LEVELS[self.speed_index]
 
     def _load_drone_image(self) -> pygame.Surface:
         """Load and scale the drone image."""
@@ -302,6 +310,7 @@ class Visualizer:
             ("Zones", str(no_of_zones)),
             ("Turn", str(turn)),
             ("Status", status),
+            ("Speed", f"{self.speed:g}x"),
         ]
 
         padding = 12
@@ -334,7 +343,7 @@ class Visualizer:
     def draw_controls_hint(self) -> None:
         """Show the keyboard controls at the bottom center."""
         text = self.font.render(
-            "Space:  pause / resume    ·    Esc:  quit",
+            "Space: pause    ·    Up/Down: speed    ·    Esc: quit",
             True,
             (40, 45, 55),
         )
@@ -449,6 +458,12 @@ class Visualizer:
                         running = False
                     elif event.key == pygame.K_SPACE:
                         paused = not paused
+                    elif event.key == pygame.K_UP:
+                        self.speed_index = min(
+                            self.speed_index + 1, len(self.SPEED_LEVELS) - 1
+                        )
+                    elif event.key == pygame.K_DOWN:
+                        self.speed_index = max(self.speed_index - 1, 0)
                 elif event.type == pygame.VIDEORESIZE:
                     self.background = self._make_sky_background()
                     self._calculate_map_layout()
@@ -458,7 +473,9 @@ class Visualizer:
             last_time = current_time
 
             if simulation_active and not paused:
-                animation_progress += delta_time / animation_duration
+                animation_progress += (
+                    delta_time * self.speed / animation_duration
+                )
 
                 if animation_progress >= 1.0 + turn_pause / animation_duration:
                     if self.simulation.all_drones_finished():

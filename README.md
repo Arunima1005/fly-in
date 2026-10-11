@@ -72,8 +72,8 @@ python3 -m src [--file MAP] [--verbose] [--visual]
 
 The flags can be combined, for example `--visual --verbose`.
 
-In the pygame window: **Space** pauses and resumes, **Esc** or the close
-button quits.
+In the pygame window: **Space** pauses and resumes, **Up** / **Down** change
+the animation speed (0.5x to 8x), **Esc** or the close button quits.
 
 ### Other Makefile rules
 
@@ -307,10 +307,12 @@ in the verbose view you can see exactly where it is.
 - **Smooth animation:** drones glide between zones, with a short pause after
   each turn. A drone flying to a restricted zone stops **halfway along the
   connection** after its first turn, which shows the 2-turn cost.
-- **Stats panel:** number of drones and zones, the current turn, and the
-  status (Running, Paused or Finished).
-- **Controls:** Space to pause and resume, Esc to quit. The window can be
-  resized, and the map is re-centered and re-scaled.
+- **Stats panel:** number of drones and zones, the current turn, the
+  status (Running, Paused or Finished) and the animation speed.
+- **Controls:** Space to pause and resume, Up / Down to change the speed
+  (0.5x, 1x, 2x, 4x, 8x), Esc to quit. The speed only changes the animation,
+  not the simulation or its output. The window can be resized, and the map
+  is re-centered and re-scaled.
 - The terminal keeps printing each turn while the window is open, so the
   picture and the required output always match.
 
