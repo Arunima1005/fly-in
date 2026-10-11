@@ -43,19 +43,18 @@ def run_program(verbose: bool, visual: bool, map_file: Path | None) -> None:
     # Imported here so the terminal mode works without pygame/a display.
     os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
     import pygame
-    from .visualizer import run_visual
+    from .visualizer import Visualizer
 
-
+    visualizer_ui= Visualizer()
     simulation.assign_paths()
     if verbose:
         simulation.print_header()
     try:
-        run_visual(simulation, mp.graph, start_zone, end_zone)
+        visualizer_ui.run_visual(simulation, mp.graph, start_zone, end_zone)
     except pygame.error as error:
         raise VisualError(f"Cannot open the visualizer: {error}") from error
     finally:
         pygame.quit()
-    # run_visual(simulation, mp.graph, start_zone, end_zone)
     if verbose and simulation.all_drones_finished():
         simulation.print_summary()
 
