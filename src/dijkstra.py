@@ -7,6 +7,7 @@ from .model import Graph, Zone, ZoneType  # use your actual module here
 
 @dataclass
 class DijkstraEntry:
+    """Best known cost and route to one zone during a path search."""
     zone: Zone
     cost: float
     priority_count: int = 0
@@ -19,6 +20,7 @@ class Dijkstra:
     CONGESTION_WEIGHT = 0.01
 
     def __init__(self, graph: Graph) -> None:
+        """Store the graph to search in."""
         self.graph = graph
 
     def find_path(

@@ -5,6 +5,7 @@ class MapSelector:
     """Handle difficulty and map selection."""
 
     def __init__(self, maps_directory: Path):
+        """Store the folder that holds the difficulty subfolders."""
         self.maps_directory = maps_directory
 
     def select_difficulty(self) -> str:

@@ -39,7 +39,7 @@ def test_parse_nb_drones_first_line(tmp_path: Path) -> None:
     nb_drones: 5
     end_hub: goal 2 0
     """
-    with pytest.raises(ParserError, match="nb_drones is not mentioned in map"):
+    with pytest.raises(ParserError, match="First line must be nb_drones"):
         create_parser(tmp_path, content)
 
 def test_parse_zones(tmp_path: Path) -> None:
@@ -354,7 +354,7 @@ start_hub: A 0 0
 start_hub: B 1 1
 end_hub: C 2 2
 """
-    with pytest.raises(ParserError, match="Duplicate zone name start_hub"):
+    with pytest.raises(ParserError, match="only one start_hub is allowed"):
         create_parser(tmp_path, content)
 
 
@@ -366,7 +366,7 @@ start_hub: A 0 0
 end_hub: B 1 1
 end_hub: C 2 2
 """
-    with pytest.raises(ParserError, match="Duplicate zone name end_hub"):
+    with pytest.raises(ParserError, match="only one end_hub is allowed"):
         create_parser(tmp_path, content)
 
 def test_parse_missing_start_hub(tmp_path: Path) -> None:
@@ -525,7 +525,7 @@ end_hub: goal 2 0
         "max_link_capacity=abc",
     ],
 )
-def test_invalid_max_link_capacity(
+def test_invalid_max_link_capacity_values(
     tmp_path: Path,
     metadata: str,
 ) -> None:
@@ -547,7 +547,7 @@ connection: start-A [{metadata}]
         "max_drones=abc",
     ],
 )
-def test_invalid_max_drones(
+def test_invalid_max_drones_values(
     tmp_path: Path,
     metadata: str,
 ) -> None:

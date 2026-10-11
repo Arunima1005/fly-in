@@ -68,6 +68,7 @@ class Visualizer:
     def _calculate_map_layout(
         self,
     ) -> None:
+        """Fit the map into the window and store offset and scale."""
         xs = [zone.x for zone in self.graph.zones.values()]
         ys = [zone.y for zone in self.graph.zones.values()]
 
@@ -121,6 +122,7 @@ class Visualizer:
         position: tuple[int, int],
         size: int,
     ) -> None:
+        """Draw a filled diamond centered on position."""
         x, y = position
 
         points = [
@@ -136,6 +138,7 @@ class Visualizer:
         x: float,
         y: float,
     ) -> tuple[int, int]:
+        """Convert map coordinates to pixel coordinates."""
         screen_x = self.offset_x + x * self.scale
         screen_y = self.offset_y - y * self.scale
 
@@ -146,6 +149,7 @@ class Visualizer:
         zone_a: Zone,
         zone_b: Zone,
     ) -> None:
+        """Draw the line for a connection between two zones."""
         start = self.map_to_screen(
             zone_a.x,
             zone_a.y,
@@ -170,6 +174,7 @@ class Visualizer:
         is_start: bool = False,
         is_end: bool = False,
     ) -> None:
+        """Draw one zone with a shape that shows its type."""
         position = self.map_to_screen(
             zone.x,
             zone.y,
@@ -221,8 +226,7 @@ class Visualizer:
             
     def draw_graph(self,
     ) -> None:
-        # offset_x, offset_y, scale = self._calculate_map_layout(self.screen, graph)
-
+        """Draw all connections, then all zones on top of them."""
         for connection in self.graph.connections:
             self.draw_connection(
                 connection.zone_a,
@@ -239,6 +243,7 @@ class Visualizer:
 
     def draw_drones(self,visual_positions: dict[int, tuple[float, float]],
     ) -> None:
+        """Draw every drone at its animated position with its ID badge."""
         for drone in self.simulation.drones:
             x, y = visual_positions.get(
                 drone.drone_id,
@@ -410,7 +415,6 @@ class Visualizer:
 
 
     def run_visual(self,
-        simulation: Simulation,
     ) -> None:
         """Animate the simulation turn by turn in a pygame window.
 
@@ -450,22 +454,22 @@ class Visualizer:
                 animation_progress += delta_time / animation_duration
 
                 if animation_progress >= 1.0 + turn_pause / animation_duration:
-                    if simulation.all_drones_finished():
+                    if self.simulation.all_drones_finished():
                         simulation_active = False
                     else:
                         # Remember each drone's position before advancing.
                         start_positions = {
                             drone.drone_id: self.drone_visual_position(drone)
-                            for drone in simulation.drones
+                            for drone in self.simulation.drones
                         }
 
-                        if simulation.run_turn():
+                        if self.simulation.run_turn():
                             target_positions = {
                                 drone.drone_id: self.drone_visual_position(drone)
-                                for drone in simulation.drones
+                                for drone in self.simulation.drones
                             }
                             animation_progress = 0.0
-                            simulation.print_turn()
+                            self.simulation.print_turn()
                         else:
                             simulation_active = False
 
@@ -477,7 +481,7 @@ class Visualizer:
 
             visual_positions: dict[int, tuple[float, float]] = {}
 
-            for drone in simulation.drones:
+            for drone in self.simulation.drones:
                 drone_id = drone.drone_id
 
                 start = start_positions.get(
@@ -495,7 +499,7 @@ class Visualizer:
                 visual_positions,
             )
 
-            if simulation.all_drones_finished():
+            if self.simulation.all_drones_finished():
                 status = "Finished"
             elif paused:
                 status = "Paused"

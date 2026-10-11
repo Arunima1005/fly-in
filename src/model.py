@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class ZoneType(Enum):
+    """Kinds of zones, each with its own movement rule."""
     NORMAL = "normal"
     PRIORITY = "priority"
     BLOCKED = "blocked"
@@ -10,6 +11,7 @@ class ZoneType(Enum):
 
 
 class Zone(BaseModel):
+    """A zone (hub) on the map with its position, type and capacity."""
     name: str
     x: int
     y: int

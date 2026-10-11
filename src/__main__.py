@@ -51,7 +51,7 @@ def run_program(verbose: bool, visual: bool, map_file: Path | None) -> None:
         simulation.print_header()
     try:
         visualizer= Visualizer(simulation)
-        visualizer.run_visual(simulation)
+        visualizer.run_visual()
     except pygame.error as error:
         raise VisualError(f"Cannot open the visualizer: {error}") from error
     finally:

@@ -53,6 +53,7 @@ class Simulation:
         start_zone: Zone,
         verbose: bool = False,
     ) -> None:
+        """Set up the drones, the graph and the turn counter."""
         self.graph = graph
         self.drones = drones
         self.turn = 0

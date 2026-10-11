@@ -11,6 +11,7 @@ class MapParser:
     """Parse a Fly-in map file."""
 
     def __init__(self) -> None:
+        """Start with an empty graph and no zones or drones."""
         self.graph = Graph()
         self.nb_drones = 0
         self.first_line = False
@@ -98,36 +99,41 @@ class MapParser:
         metadata = Metadata()
         seen_keys: set[str] = set()
         for item in match.group(1).split():
-            try:
-                key, value = item.split("=", 1)
-                if key in seen_keys:
-                    raise ParserError(f"Duplicate metadata key: {key}")
+            # Check the shape first: "key" alone (no "=") is invalid, and
+            # splitting it would leave `key` unset for the error message.
+            if "=" not in item:
+                raise ParserError(
+                    f"Invalid metadata {item} (expected key=value)"
+                )
+            key, value = item.split("=", 1)
+            if key in seen_keys:
+                raise ParserError(f"Duplicate metadata key: {key}")
 
-                seen_keys.add(key)
+            seen_keys.add(key)
 
-                if key in ("max_drones", "max_link_capacity"):
-                    try:
-                        number = int(value)
-                    except ValueError as exc:
-                        raise ParserError(f"{key} must be a positive number") from exc
+            if key in ("max_drones", "max_link_capacity"):
+                try:
+                    number = int(value)
+                except ValueError as exc:
+                    raise ParserError(
+                        f"{key} must be a positive number"
+                    ) from exc
 
-                    if number <= 0:
-                        raise ParserError(f"{key} must be positive")
+                if number <= 0:
+                    raise ParserError(f"{key} must be positive")
 
-                    if key == "max_drones":
-                        metadata.max_drones = number
-                    else:
-                        metadata.max_link_capacity = number
-                elif key == "color":
-                    metadata.color = value
-                elif key == "zone":
-                    if not self.valid_zone(value):
-                        raise ParserError(f"Invalid zone type {value}")
-                    metadata.zone = ZoneType(value)
+                if key == "max_drones":
+                    metadata.max_drones = number
                 else:
-                    raise ParserError(f"unknown metadata key - {key}")
-            except ValueError as exc:
-                raise ParserError(f"unknown metadata key - {key}") from exc
+                    metadata.max_link_capacity = number
+            elif key == "color":
+                metadata.color = value
+            elif key == "zone":
+                if not self.valid_zone(value):
+                    raise ParserError(f"Invalid zone type {value}")
+                metadata.zone = ZoneType(value)
+            else:
+                raise ParserError(f"Unknown metadata key - {key}")
         return metadata
 
     def parse_nb_drones(self, line: str) -> int:
