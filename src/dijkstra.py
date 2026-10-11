@@ -8,6 +8,7 @@ from .model import Graph, Zone, ZoneType  # use your actual module here
 @dataclass
 class DijkstraEntry:
     """Best known cost and route to one zone during a path search."""
+
     zone: Zone
     cost: float
     priority_count: int = 0
@@ -17,6 +18,7 @@ class DijkstraEntry:
 class Dijkstra:
     """Find the minimum-cost path between zones, preferring paths that
     pass through more priority zones whenever two paths tie on cost."""
+
     CONGESTION_WEIGHT = 0.01
 
     def __init__(self, graph: Graph) -> None:
@@ -24,11 +26,11 @@ class Dijkstra:
         self.graph = graph
 
     def find_path(
-    self,
-    start: Zone,
-    end: Zone,
-    zone_usage: "Counter[str] | None" = None,
-) -> list[Zone] | None:
+        self,
+        start: Zone,
+        end: Zone,
+        zone_usage: "Counter[str] | None" = None,
+    ) -> list[Zone] | None:
         """Return the minimum-cost path, breaking cost ties first in
         favor of the path with more priority zones, then in favor of
         the path whose zones have been used by fewer earlier drones.
@@ -95,13 +97,17 @@ class Dijkstra:
                 if neighbor.zone_type == ZoneType.BLOCKED:
                     continue
 
-                base_cost = 2 if neighbor.zone_type == ZoneType.RESTRICTED else 1
+                base_cost = (
+                    2 if neighbor.zone_type == ZoneType.RESTRICTED else 1
+                )
                 congestion = self.CONGESTION_WEIGHT * zone_usage[neighbor.name]
                 movement_cost = base_cost + congestion
                 is_priority = neighbor.zone_type == ZoneType.PRIORITY
 
                 new_cost = current_cost + movement_cost
-                new_priority = current_entry.priority_count + (1 if is_priority else 0)
+                new_priority = (
+                    current_entry.priority_count + (1 if is_priority else 0)
+                )
                 neighbor_entry = entries[neighbor.name]
 
                 candidate_key = (new_cost, -new_priority)

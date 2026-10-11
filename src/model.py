@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 class ZoneType(Enum):
     """Kinds of zones, each with its own movement rule."""
+
     NORMAL = "normal"
     PRIORITY = "priority"
     BLOCKED = "blocked"
@@ -12,6 +13,7 @@ class ZoneType(Enum):
 
 class Zone(BaseModel):
     """A zone (hub) on the map with its position, type and capacity."""
+
     name: str
     x: int
     y: int
@@ -19,7 +21,7 @@ class Zone(BaseModel):
     color: str | None = None
     max_drones: int = 1
 
-    
+
 class Connection(BaseModel):
     """Represent a bidirectional connection between two zones."""
 
@@ -60,7 +62,9 @@ class Graph(BaseModel):
         """Check whether a connection already exists."""
 
         for connection in self.connections:
-            if (connection.zone_a == zone_a and connection.zone_b == zone_b) or (
+            if (
+                connection.zone_a == zone_a and connection.zone_b == zone_b
+            ) or (
                 connection.zone_b == zone_a and connection.zone_a == zone_b
             ):
                 return True
@@ -79,18 +83,16 @@ class Graph(BaseModel):
         return neighbors
 
     def get_connection(
-    self,
-    zone_a: Zone,
-    zone_b: Zone,
-) -> Connection | None:
+        self,
+        zone_a: Zone,
+        zone_b: Zone,
+    ) -> Connection | None:
         """Return the connection between two zones, if it exists."""
         for connection in self.connections:
             if (
-                connection.zone_a == zone_a
-                and connection.zone_b == zone_b
+                connection.zone_a == zone_a and connection.zone_b == zone_b
             ) or (
-                connection.zone_a == zone_b
-                and connection.zone_b == zone_a
+                connection.zone_a == zone_b and connection.zone_b == zone_a
             ):
                 return connection
 

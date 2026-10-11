@@ -1,5 +1,5 @@
 from .dijkstra import Dijkstra
-from .model import Drone, Zone, Connection, Graph, ZoneType
+from .model import Drone, Zone, Graph, ZoneType
 
 import sys
 from collections import Counter
@@ -15,31 +15,6 @@ GREEN = "\033[92m"
 RED = "\033[91m"
 WHITE = "\033[97m"
 MAGENTA = "\033[95m"
-
-# 256-color codes for the color names used in map metadata. Any color
-# not listed here is printed without color.
-ZONE_COLORS: dict[str, str] = {
-    "black": "\033[38;5;245m",
-    "blue": "\033[38;5;33m",
-    "brown": "\033[38;5;130m",
-    "crimson": "\033[38;5;161m",
-    "cyan": "\033[38;5;51m",
-    "darkred": "\033[38;5;88m",
-    "gold": "\033[38;5;220m",
-    "gray": "\033[38;5;244m",
-    "green": "\033[38;5;40m",
-    "grey": "\033[38;5;244m",
-    "lime": "\033[38;5;118m",
-    "magenta": "\033[38;5;201m",
-    "maroon": "\033[38;5;52m",
-    "orange": "\033[38;5;208m",
-    "pink": "\033[38;5;211m",
-    "purple": "\033[38;5;93m",
-    "red": "\033[38;5;196m",
-    "violet": "\033[38;5;177m",
-    "white": "\033[38;5;255m",
-    "yellow": "\033[38;5;226m",
-}
 
 
 class Simulation:
@@ -65,20 +40,19 @@ class Simulation:
         # restricted zone, the connection name.
         self.turn_moves: list[tuple[Drone, Zone, str]] = []
 
-
     def assign_paths(self) -> None:
         """Calculate and assign a path to every drone."""
         dijkstra = Dijkstra(self.graph)
         zone_usage: Counter[str] = Counter()
         for drone in self.drones:
             path: list[Zone] | None = dijkstra.find_path(
-                        self.start_zone,
-                        self.end_zone,
-                        zone_usage,
-                    )
+                self.start_zone,
+                self.end_zone,
+                zone_usage,
+            )
             if path is None:
                 raise ValueError("No path found from start to end")
-            
+
             drone.path = path
             drone.path_index = 0
             for zone in path:
@@ -201,9 +175,8 @@ class Simulation:
         for drone in self.drones:
             if drone.movement_remaining > 0:
                 destination = drone.path[drone.path_index + 1]
-                link_usage[
-                    self.connection_key(drone.current_zone, destination)
-                ] += 1
+                key = self.connection_key(drone.current_zone, destination)
+                link_usage[key] += 1
                 drone.current_zone = destination
                 drone.path_index += 1
                 drone.movement_remaining = 0
@@ -228,7 +201,9 @@ class Simulation:
 
     def all_drones_finished(self) -> bool:
         """Return True when all drones have reached the end zone."""
-        return all(drone.current_zone == self.end_zone for drone in self.drones)
+        return all(
+            drone.current_zone == self.end_zone for drone in self.drones
+        )
 
     def run(self) -> None:
         """Run the simulation until all drones reach the end."""
@@ -291,7 +266,6 @@ class Simulation:
         print(f"{BOLD}{CYAN}                    SIMULATION{RESET}")
         print(f"{CYAN}{'-' * 60}{RESET}")
 
-
     def print_status(self) -> None:
         """Print the current position of every drone."""
 
@@ -306,21 +280,21 @@ class Simulation:
                 )
             elif drone.current_zone == self.end_zone:
                 positions.append(
-                    f"{GREEN}D{drone.drone_id}-{drone.current_zone.name}{RESET}"
+                    f"{GREEN}D{drone.drone_id}-"
+                    f"{drone.current_zone.name}{RESET}"
                 )
             elif drone.current_zone == self.start_zone:
                 positions.append(
-                    f"{MAGENTA}D{drone.drone_id}-{drone.current_zone.name}{RESET}"
+                    f"{MAGENTA}D{drone.drone_id}-"
+                    f"{drone.current_zone.name}{RESET}"
                 )
             else:
                 positions.append(
-                    f"{WHITE}D{drone.drone_id}-{drone.current_zone.name}{RESET}"
+                    f"{WHITE}D{drone.drone_id}-"
+                    f"{drone.current_zone.name}{RESET}"
                 )
 
-        print(
-            f"{YELLOW}Turn {self.turn:02d}{RESET}  "
-            + " ".join(positions)
-        )
+        print(f"{YELLOW}Turn {self.turn:02d}{RESET}  " + " ".join(positions))
 
     def print_summary(self) -> None:
         """Print the simulation summary."""

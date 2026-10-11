@@ -1,5 +1,3 @@
-import pytest
-
 from src.model import Graph, Zone, ZoneType, Connection
 from src.dijkstra import Dijkstra
 
@@ -159,7 +157,6 @@ def test_choose_cheapest_route() -> None:
     assert [zone.name for zone in path] == ["A", "B", "D"]
 
 
-
 def test_blocked_start() -> None:
     """Do not enter a blocked zone if another route exists."""
     a = create_zone("A", ZoneType.BLOCKED)
@@ -204,6 +201,7 @@ def test_blocked_destination() -> None:
     path = dijkstra.find_path(a, d)
 
     assert path is None
+
 
 def test_prefer_priority_zone_when_costs_tie() -> None:
     """Prefer a route with more priority zones when costs are equal."""
@@ -256,6 +254,7 @@ def test_prefer_more_priority_zones() -> None:
     assert path is not None
     assert [zone.name for zone in path] == ["A", "D", "E", "F"]
 
+
 def test_cost_has_priority_over_priority_count() -> None:
     """Prefer lower cost over a route with more priority zones."""
     a = create_zone("A")
@@ -283,6 +282,7 @@ def test_cost_has_priority_over_priority_count() -> None:
 
     assert path is not None
     assert [zone.name for zone in path] == ["A", "E", "D"]
+
 
 def test_no_path_through_blocked_zones() -> None:
     """Return None if every possible route is blocked."""

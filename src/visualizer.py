@@ -1,9 +1,9 @@
 from time import perf_counter
 import pygame
-from functools import lru_cache
 from .simulation import Simulation
-from .model import Drone, Graph, Zone, ZoneType
+from .model import Drone, Zone, ZoneType
 from pathlib import Path
+
 
 class Visualizer:
     """Pygame visualization of the simulation (enabled with --visual)."""
@@ -42,7 +42,7 @@ class Visualizer:
         pygame.display.set_caption("Fly-in")
 
         self.simulation = simulation
-        self.graph = simulation.graph            # already stored there
+        self.graph = simulation.graph  # already stored there
         self.background = self._make_sky_background()
         self.drone_image = self._load_drone_image()
         self.font = pygame.font.SysFont(None, 24)
@@ -54,16 +54,12 @@ class Visualizer:
         self.scale = 1.0
         self._calculate_map_layout()
 
-
     def _load_drone_image(self) -> pygame.Surface:
         """Load and scale the drone image."""
-        image = pygame.image.load(
-            str(Path(__file__).resolve().parent.parent / "assets" / "drone.png")
-        ).convert_alpha()
+        path = Path(__file__).resolve().parent.parent / "assets" / "drone.png"
+        image = pygame.image.load(str(path)).convert_alpha()
 
         return pygame.transform.smoothscale(image, (24, 24))
-
-
 
     def _calculate_map_layout(
         self,
@@ -88,7 +84,6 @@ class Visualizer:
         if scale == float("inf"):
             scale = 1
 
-
         map_center_x = (min_x + max_x) / 2
         map_center_y = (min_y + max_y) / 2
 
@@ -98,7 +93,6 @@ class Visualizer:
         self.offset_x = int(screen_center_x - map_center_x * scale)
         self.offset_y = int(screen_center_y + map_center_y * scale)
         self.scale = scale
-
 
     def _make_sky_background(self) -> pygame.Surface:
         """Create a vertical sky gradient the size of the window."""
@@ -116,8 +110,8 @@ class Visualizer:
 
         return sky
 
-
-    def draw_diamond(self,
+    def draw_diamond(
+        self,
         color: tuple[int, int, int],
         position: tuple[int, int],
         size: int,
@@ -134,18 +128,19 @@ class Visualizer:
 
         pygame.draw.polygon(self.screen, color, points)
 
-    def map_to_screen(self,
+    def map_to_screen(
+        self,
         x: float,
         y: float,
     ) -> tuple[int, int]:
         """Convert map coordinates to pixel coordinates."""
-        screen_x = self.offset_x + x * self.scale
-        screen_y = self.offset_y - y * self.scale
+        screen_x = int(self.offset_x + x * self.scale)
+        screen_y = int(self.offset_y - y * self.scale)
 
         return screen_x, screen_y
 
-
-    def draw_connection(self,
+    def draw_connection(
+        self,
         zone_a: Zone,
         zone_b: Zone,
     ) -> None:
@@ -161,15 +156,15 @@ class Visualizer:
         )
 
         pygame.draw.line(
-        self.screen,
-        (60, 75, 95),
-        start,
-        end,
-        2,
-    )
+            self.screen,
+            (60, 75, 95),
+            start,
+            end,
+            2,
+        )
 
-
-    def draw_zone(self,
+    def draw_zone(
+        self,
         zone: Zone,
         is_start: bool = False,
         is_end: bool = False,
@@ -190,16 +185,24 @@ class Visualizer:
         if zone.zone_type == ZoneType.PRIORITY:
             x, y = position
             self.draw_diamond(color, position, size)
-            pygame.draw.polygon(self.screen, outline,
-                        [(x, y - size), (x + size, y), (x, y + size), (x - size, y)], 2)
+            pygame.draw.polygon(
+                self.screen,
+                outline,
+                [(x, y - size), (x + size, y), (x, y + size), (x - size, y)],
+                2,
+            )
         elif zone.zone_type == ZoneType.RESTRICTED:
             pygame.draw.rect(
                 self.screen,
                 color,
                 (position[0] - size, position[1] - size, size * 2, size * 2),
             )
-            pygame.draw.rect(self.screen, outline,
-                        (position[0] - size, position[1] - size, size * 2, size * 2), 2)
+            pygame.draw.rect(
+                self.screen,
+                outline,
+                (position[0] - size, position[1] - size, size * 2, size * 2),
+                2,
+            )
 
         elif zone.zone_type == ZoneType.BLOCKED:
             points = [
@@ -223,8 +226,8 @@ class Visualizer:
                 3,
             )
 
-            
-    def draw_graph(self,
+    def draw_graph(
+        self,
     ) -> None:
         """Draw all connections, then all zones on top of them."""
         for connection in self.graph.connections:
@@ -240,8 +243,9 @@ class Visualizer:
                 is_end=zone.name == self.simulation.end_zone.name,
             )
 
-
-    def draw_drones(self,visual_positions: dict[int, tuple[float, float]],
+    def draw_drones(
+        self,
+        visual_positions: dict[int, tuple[float, float]],
     ) -> None:
         """Draw every drone at its animated position with its ID badge."""
         for drone in self.simulation.drones:
@@ -251,15 +255,16 @@ class Visualizer:
             )
 
             position = self.map_to_screen(
-                x, y,
+                x,
+                y,
             )
 
             rect = self.drone_image.get_rect(center=position)
             self.screen.blit(self.drone_image, rect)
             self.draw_drone_badge(drone.drone_id, rect.bottomright)
 
-
-    def draw_drone_badge(self,
+    def draw_drone_badge(
+        self,
         drone_id: int,
         corner: tuple[int, int],
     ) -> None:
@@ -273,8 +278,8 @@ class Visualizer:
         pygame.draw.circle(self.screen, (255, 255, 255), center, radius, 1)
         self.screen.blit(text, text.get_rect(center=center))
 
-
-    def draw_panel_background(self,
+    def draw_panel_background(
+        self,
         rect: tuple[int, int, int, int],
     ) -> None:
         """Draw a rounded, semi-transparent white box at rect."""
@@ -288,12 +293,8 @@ class Visualizer:
         )
         self.screen.blit(panel, (left, top))
 
-
-    def draw_stats_panel(self,
-        no_of_drones: int,
-        no_of_zones: int,
-        turn: int,
-        status: str
+    def draw_stats_panel(
+        self, no_of_drones: int, no_of_zones: int, turn: int, status: str
     ) -> None:
         """Draw drone count, zone count and current turn (top-left)."""
         rows = [
@@ -346,7 +347,6 @@ class Visualizer:
         self.draw_panel_background((left, top, width, height))
         self.screen.blit(text, (left + padding, top + padding))
 
-
     def draw_legend(self) -> None:
         """Draw which shape stands for which zone type (bottom-left)."""
         size = 9
@@ -375,7 +375,9 @@ class Visualizer:
                 pygame.draw.circle(self.screen, color, (x, y), size)
             elif shape == "square":
                 pygame.draw.rect(
-                    self.screen, color, (x - size, y - size, size * 2, size * 2)
+                    self.screen,
+                    color,
+                    (x - size, y - size, size * 2, size * 2),
                 )
             elif shape == "diamond":
                 self.draw_diamond(color, (x, y), size)
@@ -383,21 +385,26 @@ class Visualizer:
                 pygame.draw.polygon(
                     self.screen,
                     color,
-                    [(x, y - size), (x + size, y + size), (x - size, y + size)],
+                    [
+                        (x, y - size),
+                        (x + size, y + size),
+                        (x - size, y + size),
+                    ],
                 )
 
             text = self.font.render(label, True, (40, 45, 55))
             self.screen.blit(text, (x + size + 12, y - text.get_height() // 2))
 
-
-    def draw_map_details(self,
-        status: str
-    ) -> None:
+    def draw_map_details(self, status: str) -> None:
         """Draw the stats panel and the shape legend."""
-        self.draw_stats_panel(len(self.simulation.drones), len(self.graph.zones), self.simulation.turn, status)
+        self.draw_stats_panel(
+            len(self.simulation.drones),
+            len(self.graph.zones),
+            self.simulation.turn,
+            status,
+        )
         self.draw_legend()
         self.draw_controls_hint()
-
 
     def drone_visual_position(self, drone: Drone) -> tuple[float, float]:
         """Return where to draw the drone at the end of a turn.
@@ -413,8 +420,8 @@ class Visualizer:
             )
         return (drone.current_zone.x, drone.current_zone.y)
 
-
-    def run_visual(self,
+    def run_visual(
+        self,
     ) -> None:
         """Animate the simulation turn by turn in a pygame window.
 
@@ -465,7 +472,8 @@ class Visualizer:
 
                         if self.simulation.run_turn():
                             target_positions = {
-                                drone.drone_id: self.drone_visual_position(drone)
+                                drone.drone_id:
+                                    self.drone_visual_position(drone)
                                 for drone in self.simulation.drones
                             }
                             animation_progress = 0.0

@@ -168,7 +168,9 @@ class MapParser:
         if zone_b is None:
             raise ParserError(f"Unknown zone {match.group(2)}")
         if self.graph.has_connection(zone_a, zone_b):
-            raise ParserError(f"Duplicate connection {zone_a.name} - {zone_b.name}")
+            raise ParserError(
+                f"Duplicate connection {zone_a.name} - {zone_b.name}"
+            )
         if zone_a == zone_b:
             raise ParserError(f"Self connection {zone_a.name} - {zone_b.name}")
 
@@ -198,9 +200,13 @@ class MapParser:
         except FileNotFoundError as exc:
             raise ParserError(f"Map file not found: {path}") from exc
         except IsADirectoryError as exc:
-            raise ParserError(f"{path} is a directory, not a map file") from exc
+            raise ParserError(
+                f"{path} is a directory, not a map file"
+            ) from exc
         except PermissionError as exc:
-            raise ParserError(f"No permission to read map file: {path}") from exc
+            raise ParserError(
+                f"No permission to read map file: {path}"
+            ) from exc
         except UnicodeDecodeError as exc:
             raise ParserError(f"{path} is not a text file") from exc
         except OSError as exc:

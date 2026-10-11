@@ -26,5 +26,5 @@ clean:
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
 
 lint:
-	$(PYTHON) -m flake8 src
-	$(PYTHON) -m mypy src
+	$(PYTHON) -m flake8 .
+	$(PYTHON) -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs

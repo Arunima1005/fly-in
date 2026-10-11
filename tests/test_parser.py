@@ -42,6 +42,7 @@ def test_parse_nb_drones_first_line(tmp_path: Path) -> None:
     with pytest.raises(ParserError, match="First line must be nb_drones"):
         create_parser(tmp_path, content)
 
+
 def test_parse_zones(tmp_path: Path) -> None:
     """Test parsing zones."""
     content = """\
@@ -78,6 +79,7 @@ end_hub: goal 30 40
     assert zone.x == -5
     assert zone.y == -7
 
+
 def test_duplicate_nb_drones(tmp_path: Path) -> None:
     """Test that nb_drones cannot be defined twice."""
     content = """\
@@ -88,6 +90,7 @@ nb_drones: 10
     with pytest.raises(ParserError, match="Duplicate nb_drones"):
         create_parser(tmp_path, content)
 
+
 def test_invalid_zone_type(tmp_path: Path) -> None:
     """Test that an invalid zone type is rejected."""
     content = """\
@@ -97,6 +100,7 @@ hub: A 1 0 [zone=foobar]
 
     with pytest.raises(ParserError, match="Invalid zone type"):
         create_parser(tmp_path, content)
+
 
 def test_invalid_max_drones(tmp_path: Path) -> None:
     """Test that max_drones must be positive."""
@@ -117,10 +121,11 @@ hub: A 1 0 [max_drones=abc]
 """
 
     with pytest.raises(
-    ParserError,
-    match="max_drones must be a positive number",
-):
+        ParserError,
+        match="max_drones must be a positive number",
+    ):
         create_parser(tmp_path, content)
+
 
 def test_invalid_metadata_format(tmp_path: Path) -> None:
     """Test that metadata must contain a key and value."""
@@ -131,6 +136,7 @@ hub: A 1 0 [max_drones]
 
     with pytest.raises(ParserError, match="Invalid metadata max_drones"):
         create_parser(tmp_path, content)
+
 
 def test_comments_before_nb_drones(tmp_path: Path) -> None:
     """Test that comments and blank lines are ignored."""
@@ -153,6 +159,7 @@ def test_missing_nb_drones(tmp_path: Path) -> None:
 
     with pytest.raises(ParserError, match="Map is missing nb_drones"):
         create_parser(tmp_path, content)
+
 
 def test_parse_zone_metadata(tmp_path: Path) -> None:
     """Test parsing zone metadata."""
@@ -277,6 +284,7 @@ connection: A-start
     with pytest.raises(ParserError, match="Duplicate connection"):
         create_parser(tmp_path, content)
 
+
 def test_zone_name_cannot_contain_dash(tmp_path: Path) -> None:
     """Test that zone names cannot contain dashes."""
     content = """\
@@ -290,6 +298,7 @@ hub: my-zone 1 0
     ):
         create_parser(tmp_path, content)
 
+
 def test_invalid_x_coordinate(tmp_path: Path) -> None:
     """Test that x coordinate must be an integer."""
     content = """\
@@ -299,6 +308,7 @@ hub: A abc 20
 
     with pytest.raises(ParserError, match="Invalid hub format"):
         create_parser(tmp_path, content)
+
 
 def test_invalid_y_coordinate(tmp_path: Path) -> None:
     """Test that y coordinate must be an integer."""
@@ -310,6 +320,7 @@ hub: A 10 abc
     with pytest.raises(ParserError, match="Invalid hub format"):
         create_parser(tmp_path, content)
 
+
 def test_decimal_coordinate(tmp_path: Path) -> None:
     """Test that coordinates cannot be decimal values."""
     content = """\
@@ -320,6 +331,7 @@ hub: A 10.5 20
     with pytest.raises(ParserError, match="Invalid hub format"):
         create_parser(tmp_path, content)
 
+
 def test_invalid_text_after_coordinates(tmp_path: Path) -> None:
     """Test that unexpected text after coordinates is rejected."""
     content = """\
@@ -329,6 +341,7 @@ hub: A 10 20 garbage
 
     with pytest.raises(ParserError, match="Invalid hub format"):
         create_parser(tmp_path, content)
+
 
 def test_parse_start_and_end_hub(tmp_path: Path) -> None:
     """Test that start and end hubs are identified."""
@@ -345,6 +358,7 @@ end_hub: goal 2 0
     assert parser.start_zone.name == "start"
     assert parser.end_zone is not None
     assert parser.end_zone.name == "goal"
+
 
 def test_parse_duplicate_start_hub(tmp_path: Path) -> None:
     """Test that duplicate start hubs are rejected."""
@@ -369,6 +383,7 @@ end_hub: C 2 2
     with pytest.raises(ParserError, match="only one end_hub is allowed"):
         create_parser(tmp_path, content)
 
+
 def test_parse_missing_start_hub(tmp_path: Path) -> None:
     """Test that a missing start hub is rejected."""
     content = """\
@@ -377,7 +392,9 @@ def test_parse_missing_start_hub(tmp_path: Path) -> None:
     end_hub: C 2 2
     """
     with pytest.raises(ParserError, match="Map is missing start_hub"):
-            create_parser(tmp_path, content)
+        create_parser(tmp_path, content)
+
+
 def test_parse_missing_end_hub(tmp_path: Path) -> None:
     """Test that a missing end hub is rejected."""
     content = """\
@@ -386,7 +403,7 @@ def test_parse_missing_end_hub(tmp_path: Path) -> None:
     hub: C 2 2
     """
     with pytest.raises(ParserError, match="Map is missing end_hub"):
-            create_parser(tmp_path, content)
+        create_parser(tmp_path, content)
 
 
 def test_invalid_text_after_connection(tmp_path: Path) -> None:
@@ -402,6 +419,7 @@ connection: start-A garbage
     with pytest.raises(ParserError, match="Invalid connection format"):
         create_parser(tmp_path, content)
 
+
 def test_invalid_connection_missing_second_zone(tmp_path: Path) -> None:
     """Test that a connection must contain two zones."""
     content = """\
@@ -414,6 +432,7 @@ connection: start-
 
     with pytest.raises(ParserError, match="Invalid connection format"):
         create_parser(tmp_path, content)
+
 
 def test_invalid_connection_missing_first_zone(tmp_path: Path) -> None:
     """Test that a connection must contain two zones."""
@@ -428,6 +447,7 @@ connection: -A
     with pytest.raises(ParserError, match="Invalid connection format"):
         create_parser(tmp_path, content)
 
+
 def test_invalid_connection_too_many_separators(tmp_path: Path) -> None:
     """Test that a connection contains exactly two zone names."""
     content = """\
@@ -440,6 +460,7 @@ connection: start-A-goal
 
     with pytest.raises(ParserError, match="Invalid connection format"):
         create_parser(tmp_path, content)
+
 
 def test_invalid_max_link_capacity(tmp_path: Path) -> None:
     """Test that max_link_capacity must be positive."""
@@ -457,6 +478,7 @@ connection: start-A [max_link_capacity=0]
     ):
         create_parser(tmp_path, content)
 
+
 def test_negative_max_link_capacity(tmp_path: Path) -> None:
     """Test that max_link_capacity cannot be negative."""
     content = """\
@@ -473,6 +495,7 @@ connection: start-A [max_link_capacity=-1]
     ):
         create_parser(tmp_path, content)
 
+
 def test_invalid_line(tmp_path: Path) -> None:
     """Test that an unknown map line is rejected."""
     content = """\
@@ -485,6 +508,7 @@ something_invalid
     with pytest.raises(ParserError, match="Invalid line"):
         create_parser(tmp_path, content)
 
+
 def test_duplicate_zone_metadata(tmp_path: Path) -> None:
     content = """\
 nb_drones: 2
@@ -494,6 +518,7 @@ end_hub: goal 2 0
 """
     with pytest.raises(ParserError, match="Duplicate metadata key: zone"):
         create_parser(tmp_path, content)
+
 
 @pytest.mark.parametrize(
     "metadata",
@@ -517,6 +542,7 @@ end_hub: goal 2 0
     with pytest.raises(ParserError, match="Duplicate metadata key"):
         create_parser(tmp_path, content)
 
+
 @pytest.mark.parametrize(
     "metadata",
     [
@@ -539,6 +565,7 @@ connection: start-A [{metadata}]
     with pytest.raises(ParserError):
         create_parser(tmp_path, content)
 
+
 @pytest.mark.parametrize(
     "metadata",
     [
@@ -559,6 +586,8 @@ end_hub: goal 2 0
 """
     with pytest.raises(ParserError):
         create_parser(tmp_path, content)
+
+
 def test_parse_max_link_capacity(tmp_path: Path) -> None:
     content = """\
 nb_drones: 3
@@ -571,6 +600,7 @@ connection: start-A [max_link_capacity=4]
 
     connection = parser.graph.connections[0]
     assert connection.max_link_capacity == 4
+
 
 def test_parse_max_drones(tmp_path: Path) -> None:
     content = """\
