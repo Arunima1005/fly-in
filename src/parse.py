@@ -19,8 +19,9 @@ class MapParser:
 
     def parse_line(self, line: str) -> None:
         """Parse a single line from the map."""
-        line = line.strip()
-        if not line or line.startswith("#"):
+        line = line.split("#", 1)[0].strip()
+
+        if not line:
             return
 
         if not self.first_line:
@@ -29,7 +30,7 @@ class MapParser:
                 self.first_line = True
                 return
             else:
-                raise ParserError("nb_drones is not mentioned in map")
+                raise ParserError("First line must be nb_drones: <number>")
         else:
             if line.startswith("nb_drones:"):
                 raise ParserError("Duplicate nb_drones")
@@ -43,11 +44,11 @@ class MapParser:
                 raise ParserError(f"Duplicate zone name: {zone.name}")
             if line.startswith("start_hub:"):
                 if self.start_zone is not None:
-                    raise ParserError("Duplicate zone name start_hub")
+                    raise ParserError("only one start_hub is allowed")
                 self.start_zone = zone
             elif line.startswith("end_hub:"):
                 if self.end_zone is not None:
-                    raise ParserError("Duplicate zone name end_hub")
+                    raise ParserError("only one end_hub is allowed")
                 self.end_zone = zone
             self.graph.add_zone(zone)
             return
@@ -121,12 +122,12 @@ class MapParser:
                     metadata.color = value
                 elif key == "zone":
                     if not self.valid_zone(value):
-                        raise ParserError("Invalid zone type")
+                        raise ParserError(f"Invalid zone type {value}")
                     metadata.zone = ZoneType(value)
                 else:
-                    raise ParserError("Invalid metadata")
+                    raise ParserError(f"unknown metadata key - {key}")
             except ValueError as exc:
-                raise ParserError("Invalid metadata") from exc
+                raise ParserError(f"unknown metadata key - {key}") from exc
         return metadata
 
     def parse_nb_drones(self, line: str) -> int:
@@ -162,6 +163,8 @@ class MapParser:
             raise ParserError(f"Unknown zone {match.group(2)}")
         if self.graph.has_connection(zone_a, zone_b):
             raise ParserError(f"Duplicate connection {zone_a.name} - {zone_b.name}")
+        if zone_a == zone_b:
+            raise ParserError(f"Self connection {zone_a.name} - {zone_b.name}")
 
         return Connection(
             zone_a=zone_a,

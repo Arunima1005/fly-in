@@ -259,8 +259,7 @@ class Visualizer:
         corner: tuple[int, int],
     ) -> None:
         """Draw a small numbered badge at the drone's bottom-right corner."""
-        font = pygame.font.SysFont(None, 16)
-        text = font.render(str(drone_id), True, (255, 255, 255))
+        text = self.badge_font.render(str(drone_id), True, (255, 255, 255))
 
         radius = max(7, text.get_width() // 2 + 3)
         center = (corner[0] - 4, corner[1] - 4)
@@ -292,7 +291,6 @@ class Visualizer:
         status: str
     ) -> None:
         """Draw drone count, zone count and current turn (top-left)."""
-        font = pygame.font.SysFont(None, 24)
         rows = [
             ("Drones", str(no_of_drones)),
             ("Zones", str(no_of_zones)),
@@ -311,14 +309,14 @@ class Visualizer:
         for i, (label, value) in enumerate(rows):
             y = top + padding + row_height * i + row_height // 2
 
-            label_text = font.render(f"{label}:", True, (40, 45, 55))
+            label_text = self.font.render(f"{label}:", True, (40, 45, 55))
             self.screen.blit(
                 label_text,
                 (left + padding, y - label_text.get_height() // 2),
             )
 
             # Values are right-aligned so the numbers line up.
-            value_text = font.render(value, True, (40, 45, 55))
+            value_text = self.font.render(value, True, (40, 45, 55))
             self.screen.blit(
                 value_text,
                 (
@@ -329,8 +327,7 @@ class Visualizer:
 
     def draw_controls_hint(self) -> None:
         """Show the keyboard controls at the bottom center."""
-        font = pygame.font.SysFont(None, 24)
-        text = font.render(
+        text = self.font.render(
             "Space:  pause / resume    ·    Esc:  quit",
             True,
             (40, 45, 55),
@@ -347,7 +344,6 @@ class Visualizer:
 
     def draw_legend(self) -> None:
         """Draw which shape stands for which zone type (bottom-left)."""
-        font = pygame.font.SysFont(None, 24)
         size = 9
         color = (70, 80, 95)
         entries = [
@@ -385,7 +381,7 @@ class Visualizer:
                     [(x, y - size), (x + size, y + size), (x - size, y + size)],
                 )
 
-            text = font.render(label, True, (40, 45, 55))
+            text = self.font.render(label, True, (40, 45, 55))
             self.screen.blit(text, (x + size + 12, y - text.get_height() // 2))
 
 

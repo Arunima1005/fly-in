@@ -129,7 +129,7 @@ nb_drones: 2
 hub: A 1 0 [max_drones]
 """
 
-    with pytest.raises(ParserError, match="Invalid metadata"):
+    with pytest.raises(ParserError, match="Invalid metadata max_drones"):
         create_parser(tmp_path, content)
 
 def test_comments_before_nb_drones(tmp_path: Path) -> None:

@@ -90,7 +90,7 @@ def main() -> None:
 
     try:
         run_program(args.verbose, args.visual, args.file)
-    except (ParserError, ValueError, FileNotFoundError) as error:
+    except (ParserError, ValueError, FileNotFoundError, VisualError) as error:
         print(f"Error: {error}", file=sys.stderr)
         sys.exit(1)
     except (KeyboardInterrupt, EOFError):
