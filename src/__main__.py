@@ -45,12 +45,13 @@ def run_program(verbose: bool, visual: bool, map_file: Path | None) -> None:
     import pygame
     from .visualizer import Visualizer
 
-    visualizer_ui= Visualizer()
+    
     simulation.assign_paths()
     if verbose:
         simulation.print_header()
     try:
-        visualizer_ui.run_visual(simulation, mp.graph, start_zone, end_zone)
+        visualizer= Visualizer(simulation)
+        visualizer.run_visual(simulation)
     except pygame.error as error:
         raise VisualError(f"Cannot open the visualizer: {error}") from error
     finally:
