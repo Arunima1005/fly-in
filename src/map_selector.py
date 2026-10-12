@@ -25,7 +25,7 @@ class MapSelector:
             print("3. Hard")
             print("4. Challenger")
 
-            difficulty_level = input("Choice: ").strip()
+            difficulty_level = input("Enter a number (1-4):").strip()
 
             if difficulty_level in difficulties:
                 return difficulties[difficulty_level]
@@ -49,7 +49,7 @@ class MapSelector:
             for index, map_path in enumerate(maps, start=1):
                 print(f"{index}. {map_path.name}")
 
-            choice = input("Choice: ").strip()
+            choice = input("Enter the map number to select: ").strip()
 
             if choice.isdigit():
                 index = int(choice)
