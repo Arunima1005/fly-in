@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import heapq
 from collections import Counter
 
-from .model import Graph, Zone, ZoneType  # use your actual module here
+from .model import Graph, Zone, ZoneType
 
 
 @dataclass
@@ -29,7 +29,7 @@ class Dijkstra:
         self,
         start: Zone,
         end: Zone,
-        zone_usage: "Counter[str] | None" = None,
+        zone_usage: Counter[str] | None = None,
     ) -> list[Zone] | None:
         """Return the minimum-cost path, breaking cost ties first in
         favor of the path with more priority zones, then in favor of
