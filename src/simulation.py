@@ -4,17 +4,50 @@ from .model import Drone, Zone, Graph, ZoneType
 import sys
 from collections import Counter
 
-# Terminal colors
-RESET = "\033[0m"
-BOLD = "\033[1m"
 
-CYAN = "\033[96m"
-BLUE = "\033[94m"
-YELLOW = "\033[93m"
-GREEN = "\033[92m"
-RED = "\033[91m"
-WHITE = "\033[97m"
-MAGENTA = "\033[95m"
+class Color:
+    """ANSI escape codes for colored terminal output."""
+
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    CYAN = "\033[96m"
+    YELLOW = "\033[93m"
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    WHITE = "\033[97m"
+    MAGENTA = "\033[95m"
+
+    # Zone colors from the map file, as 256-color terminal codes.
+    ZONE_CODES = {
+        "black": 244,  # gray, so it stays visible on a dark terminal
+        "blue": 33,
+        "brown": 130,
+        "crimson": 161,
+        "cyan": 51,
+        "darkred": 88,
+        "gold": 220,
+        "gray": 245,
+        "green": 40,
+        "grey": 245,
+        "lime": 118,
+        "magenta": 201,
+        "maroon": 52,
+        "orange": 208,
+        "pink": 211,
+        "purple": 129,
+        "red": 196,
+        "violet": 177,
+        "white": 255,
+        "yellow": 226,
+    }
+
+    @classmethod
+    def zone(cls, zone: Zone) -> str:
+        """Return the code for a zone's map color, or white if unknown."""
+        code = cls.ZONE_CODES.get(zone.color or "")
+        if code is None:
+            return cls.WHITE
+        return f"\033[38;5;{code}m"
 
 
 class Simulation:
@@ -217,7 +250,8 @@ class Simulation:
 
             if not moved:
                 print(
-                    f"{RED}Simulation stopped: no drones can move.{RESET}",
+                    f"{Color.RED}Simulation stopped: no drones can move."
+                    f"{Color.RESET}",
                     file=sys.stderr,
                 )
                 return
@@ -251,56 +285,63 @@ class Simulation:
         """Print the simulation header."""
 
         print()
-        print(f"{CYAN}{'=' * 60}{RESET}")
-        print(f"{BOLD}{CYAN}              FLY-IN - DRONE SIMULATION{RESET}")
-        print(f"{CYAN}{'=' * 60}{RESET}")
+        print(f"{Color.CYAN}{'=' * 60}{Color.RESET}")
+        print(f"{Color.BOLD}{Color.CYAN}"
+              f"              FLY-IN - DRONE SIMULATION{Color.RESET}")
+        print(f"{Color.CYAN}{'=' * 60}{Color.RESET}")
         print()
 
-        print(f"{BOLD}{CYAN}SIMULATION INFO{RESET}")
-        print(f"{GREEN}✓ Drones : {len(self.drones)}{RESET}")
-        print(f"{GREEN}✓ Start  : {self.start_zone.name}{RESET}")
-        print(f"{GREEN}✓ End    : {self.end_zone.name}{RESET}")
+        print(f"{Color.BOLD}{Color.CYAN}SIMULATION INFO{Color.RESET}")
+        print(f"{Color.GREEN}✓ Drones : {len(self.drones)}{Color.RESET}")
+        print(f"{Color.GREEN}✓ Start  : {self.start_zone.name}{Color.RESET}")
+        print(f"{Color.GREEN}✓ End    : {self.end_zone.name}{Color.RESET}")
         print()
 
-        print(f"{CYAN}{'-' * 60}{RESET}")
-        print(f"{BOLD}{CYAN}                    SIMULATION{RESET}")
-        print(f"{CYAN}{'-' * 60}{RESET}")
+        print(f"{Color.CYAN}{'-' * 60}{Color.RESET}")
+        print(f"{Color.BOLD}{Color.CYAN}"
+              f"                    SIMULATION{Color.RESET}")
+        print(f"{Color.CYAN}{'-' * 60}{Color.RESET}")
 
     def print_status(self) -> None:
-        """Print the current position of every drone."""
+        """Print every drone's position, with zone names in map colors.
 
+        The drone ID shows its state (magenta waiting at the start, white
+        on the way, red in flight to a restricted zone, green delivered).
+        The zone name uses the color given in the map file.
+        """
         positions = []
 
         for drone in self.drones:
+            zone = drone.current_zone
             if drone.movement_remaining > 0:
+                state = Color.RED
                 destination = drone.path[drone.path_index + 1]
-                positions.append(
-                    f"{RED}D{drone.drone_id}-"
-                    f"{drone.current_zone.name}-{destination.name}{RESET}"
-                )
-            elif drone.current_zone == self.end_zone:
-                positions.append(
-                    f"{GREEN}D{drone.drone_id}-"
-                    f"{drone.current_zone.name}{RESET}"
-                )
-            elif drone.current_zone == self.start_zone:
-                positions.append(
-                    f"{MAGENTA}D{drone.drone_id}-"
-                    f"{drone.current_zone.name}{RESET}"
+                place = (
+                    f"{Color.zone(zone)}{zone.name}{Color.RESET}{state}-"
+                    f"{Color.zone(destination)}{destination.name}"
                 )
             else:
-                positions.append(
-                    f"{WHITE}D{drone.drone_id}-"
-                    f"{drone.current_zone.name}{RESET}"
-                )
+                if zone == self.end_zone:
+                    state = Color.GREEN
+                elif zone == self.start_zone:
+                    state = Color.MAGENTA
+                else:
+                    state = Color.WHITE
+                place = f"{Color.zone(zone)}{zone.name}"
+            positions.append(
+                f"{state}D{drone.drone_id}-{place}{Color.RESET}"
+            )
 
-        print(f"{YELLOW}Turn {self.turn:02d}{RESET}  " + " ".join(positions))
+        print(
+            f"{Color.YELLOW}Turn {self.turn:02d}{Color.RESET}  "
+            + " ".join(positions)
+        )
 
     def print_summary(self) -> None:
         """Print the simulation summary."""
 
         print()
-        print(f"{CYAN}{'=' * 60}{RESET}")
-        print(f"{BOLD}{CYAN}✓ SIMULATION COMPLETED{RESET}")
-        print(f"{YELLOW}  {self.turn} turns{RESET}")
-        print(f"{CYAN}{'=' * 60}{RESET}")
+        print(f"{Color.CYAN}{'=' * 60}{Color.RESET}")
+        print(f"{Color.BOLD}{Color.CYAN}✓ SIMULATION COMPLETED{Color.RESET}")
+        print(f"{Color.YELLOW}  {self.turn} turns{Color.RESET}")
+        print(f"{Color.CYAN}{'=' * 60}{Color.RESET}")

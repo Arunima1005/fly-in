@@ -66,7 +66,7 @@ python3 -m src [--file MAP] [--verbose] [--visual]
 |---|---|
 | *(none)* | Plain output in the required format, one line per turn |
 | `--file MAP` | Use this map file. Without it, a menu lets you pick a difficulty and a map from `maps/` (in the terminal, or in the window with `--visual`) |
-| `--verbose` | Colored, detailed terminal output: every drone's position each turn, plus a summary |
+| `--verbose` | Colored, detailed terminal output: every drone's position each turn, with zone names in their map colors, plus a summary |
 | `--visual` | Opens the pygame window, starting with a map menu (or directly with the `--file` map). The turns are still printed in the terminal |
 | `-h` | Show the help |
 
@@ -188,7 +188,7 @@ cause, and exit code 1. Some examples:
 
 ```
 Error: Line 1: First line must be nb_drones: <number>
-Error: Line 3: Invalid zone type lava
+Error: Line 3: Invalid zone type 'lava'
 Error: Line 3: max_drones must be positive
 Error: Line 4: Duplicate zone name: a
 Error: Line 5: Duplicate connection e - s
@@ -294,14 +294,23 @@ is the best possible result on that map.
 ### Terminal (`--verbose`)
 
 - A header with the number of drones and the start and end zones.
-- One line per turn with **every** drone's position, colored by state:
-  magenta for drones still waiting at the start, white for drones on the way,
-  red for drones in flight toward a restricted zone, green for delivered
-  drones.
+- One line per turn with **every** drone's position, as `D<ID>-<zone>`.
+  Each entry uses two colors:
+  - the **drone ID** shows the drone's state: magenta for drones still
+    waiting at the start, white for drones on the way, red for drones in
+    flight toward a restricted zone, green for delivered drones;
+  - the **zone name** uses the **color from the map file** (for example
+    `[color=gold]`). Zones without a color, or with a color name the
+    terminal does not know, are shown in white. `black` is shown as gray so
+    it stays readable on a dark terminal.
 - A summary with the total number of turns.
 
 This makes waiting visible: in the plain output a waiting drone is left out,
-in the verbose view you can see exactly where it is.
+in the verbose view you can see exactly where it is. The map colors make it
+easy to match the terminal output with the map file and the pygame window.
+
+The terminal uses 256-color codes, so colors like orange, gold or brown can
+look slightly different from the pygame window.
 
 ### Graphical window (`--visual`)
 

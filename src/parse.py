@@ -130,10 +130,10 @@ class MapParser:
                 metadata.color = value
             elif key == "zone":
                 if not self.valid_zone(value):
-                    raise ParserError(f"Invalid zone type {value}")
+                    raise ParserError(f"Invalid zone type '{value}'")
                 metadata.zone = ZoneType(value)
             else:
-                raise ParserError(f"Unknown metadata key - {key}")
+                raise ParserError(f"Unknown metadata key - '{key}'")
         return metadata
 
     def parse_nb_drones(self, line: str) -> int:

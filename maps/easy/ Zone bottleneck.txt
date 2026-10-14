@@ -1,0 +1,12 @@
+nb_drones: 4
+start_hub: start 0 0
+hub: neck 1 0
+end_hub: goal 2 0
+connection: start-neck [max_link_capacity=4]
+connection: neck-goal [max_link_capacity=4]
+
+# D1-neck
+# D1-goal D2-neck     ← D2 enters the same turn D1 leaves
+# D2-goal D3-neck
+# D3-goal D4-neck
+# D4-goal
