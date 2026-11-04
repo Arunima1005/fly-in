@@ -2,6 +2,10 @@
 
 # Fly-in
 
+![Fly-in visualizer running maps/hard/01_maze_nightmare.txt](assets/demo.gif)
+
+*8 drones crossing `maps/hard/01_maze_nightmare.txt` in 13 turns (`make run-visual MAP=maps/hard/01_maze_nightmare.txt`).*
+
 ## Description
 
 Fly-in is a drone routing simulator. A fleet of drones starts in a start zone
